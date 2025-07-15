@@ -1,0 +1,34 @@
+name: owl_fp
+version: 1.0.0+1
+publish_to: none
+description: A new Flutter project.
+environment:
+  sdk: ">=2.18.6 <3.0.0"
+
+dependencies:
+  cupertino_icons: ^1.0.2
+  flutter_dotenv: 5.0.2
+  flutter_screenutil: ^5.7.0
+  get: 4.6.5
+  flutter:
+    sdk: flutter
+  flutter_bluetooth_serial: ^0.4.0
+  sqflite: ^2.2.8+4
+  path: ^1.8.2
+  google_fonts: ^4.0.4
+  get_storage: ^2.1.1
+  lucide_icons: ^0.257.0
+  dio: ^4.0.6
+  equatable: ^2.0.5
+  shared_preferences: ^2.0.15
+
+dev_dependencies:
+  flutter_lints: ^2.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/image/
+    - assets/icons/

@@ -1,0 +1,30 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+
+import '../../../constant.dart';
+
+class RegisterComponent extends StatelessWidget {
+  const RegisterComponent({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: ConstPadding.screenPadding,
+      child: ListView(
+        children: [
+          Text("Registrasi Fingerprint"),
+          Divider(),
+          SizedBox(height: 12.h),
+          Text("Pilih Karyawan:"),
+          SizedBox(height: 8.h),
+          TextField(),
+          SizedBox(height: 12.h),
+          ElevatedButton(
+            onPressed: () {},
+            child: Text('Kirim'),
+          ),
+        ],
+      ),
+    );
+  }
+}

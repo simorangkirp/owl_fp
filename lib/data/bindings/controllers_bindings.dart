@@ -1,0 +1,11 @@
+export 'package:owl_fp/data/bindings/about.controller.binding.dart';
+export 'package:owl_fp/data/bindings/dashboard.controller.binding.dart';
+export 'package:owl_fp/data/bindings/fingerprint.controller.binding.dart';
+export 'package:owl_fp/data/bindings/help.controller.binding.dart';
+export 'package:owl_fp/data/bindings/home.controller.binding.dart';
+export 'package:owl_fp/data/bindings/language.controller.binding.dart';
+export 'package:owl_fp/data/bindings/login.controller.binding.dart';
+export 'package:owl_fp/data/bindings/profile.controller.binding.dart';
+export 'package:owl_fp/data/bindings/sampletext.controller.binding.dart';
+export 'package:owl_fp/data/bindings/setup.controller.binding.dart';
+export 'package:owl_fp/data/bindings/theme.controller.binding.dart';
