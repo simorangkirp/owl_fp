@@ -21,6 +21,7 @@ dependencies:
   dio: ^4.0.6
   equatable: ^2.0.5
   shared_preferences: ^2.0.15
+  flutter_typeahead: ^3.2.4
 
 dev_dependencies:
   flutter_lints: ^2.0.0

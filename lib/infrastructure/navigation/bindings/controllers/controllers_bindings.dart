@@ -1,0 +1,1 @@
+export 'package:owl_fp/data/bindings/masterdata.controller.binding.dart'; 

@@ -1,3 +1,4 @@
+import 'package:owl_fp/data/model/karyawan.model.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -6,12 +7,17 @@ class DatabaseHelper {
   factory DatabaseHelper() => _instance;
   DatabaseHelper._internal();
 
-  Database? _db;
+  Database? db;
 
   Future<Database> get database async {
-    _db ??= await initDB();
-    return _db!;
+    db ??= await initDB();
+    return db!;
   }
+
+  static const String _tblUser = 'user';
+  static const String _tblMasterHeader = 'masterheader';
+  static const String _tblDDList = 'ddlistmenu';
+  static const String _tblKaryawan = 'karyawan';
 
   Future<Database> initDB() async {
     final dbPath = await getDatabasesPath();
@@ -22,14 +28,40 @@ class DatabaseHelper {
       version: 1,
       onCreate: (db, version) async {
         await db.execute('''
-          CREATE TABLE users (
+          CREATE TABLE $_tblDDList (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            age INTEGER
+            no INTEGER,
+            key TEXT,
+            value TEXT,
+            menu TEXT,
+            submenu TEXT            
           )
         ''');
+
         await db.execute('''
-          CREATE TABLE profile (
+          CREATE TABLE $_tblMasterHeader (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE $_tblKaryawan (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            karyawanid TEXT,
+            nik TEXT,
+            lokasitugas TEXT,
+            subbagian TEXT,
+            namakaryawan TEXT,
+            tipekaryawan TEXT,
+            namajabatan TEXT,
+            kodejabatan TEXT,
+            tanggalkeluar TEXT        
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE $_tblUser (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               name TEXT NOT NULL,
               sex TEXT,
@@ -64,8 +96,82 @@ class DatabaseHelper {
               regional TEXT
           );
         ''');
+
+        var masterlist = [
+          {'name': 'Karyawan'},
+        ];
+        for (var element in masterlist) {
+          db.insert(_tblMasterHeader, element);
+        }
       },
     );
+  }
+
+  // Delete Karyawan All
+  Future<int> deleteAllKaryawan() async {
+    final db = await database;
+    return await db.delete(_tblKaryawan);
+  }
+
+  // Sync Karyawan
+  Future<void> syncKaryawan(List<dynamic> data) async {
+    final db = await database;
+    db.transaction((txn) async {
+      for (final karyawan in data) {
+        txn.insert(_tblKaryawan, karyawan.toTable());
+      }
+    });
+  }
+
+  Future<List<String>> searchKaryawan(String query) async {
+    final db = await database;
+    final List<Map<String, dynamic>> results = await db.query(
+      'karyawan',
+      where: 'name LIKE ?',
+      whereArgs: ['%$query%'],
+    );
+    return results.map((e) => e['name'] as String).toList();
+  }
+
+  //Insert User
+  Future<void> insertUser(Map<String, dynamic> args) async {
+    final db = await database;
+    db.transaction((txn) async {
+      txn.insert(_tblUser, args);
+    });
+  }
+
+  // Delete User
+  Future<int> deleteUser() async {
+    final db = await database;
+    return await db.delete(_tblUser);
+  }
+
+  // Get User
+  Future<Map<String, dynamic>?> getUser() async {
+    final db = await database;
+    final List<Map<String, dynamic>> results =
+        await db.rawQuery('SELECT * FROM $_tblUser');
+    if (results.isNotEmpty) {
+      return results.first;
+    } else {
+      return null;
+    }
+  }
+
+  // Get List Master Header
+  Future<List<String>> getMasterHeader() async {
+    final db = await database;
+    var data = <String>[];
+    final List<Map<String, dynamic>> results =
+        await db.rawQuery('SELECT * FROM $_tblMasterHeader');
+    if (results.isNotEmpty) {
+      for (var element in results) {
+        data.add(element['name']);
+      }
+      return data;
+    }
+    return data;
   }
 
   // Future<int> insertUser(User user) async {

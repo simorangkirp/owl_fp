@@ -9,3 +9,4 @@ export 'package:owl_fp/data/bindings/profile.controller.binding.dart';
 export 'package:owl_fp/data/bindings/sampletext.controller.binding.dart';
 export 'package:owl_fp/data/bindings/setup.controller.binding.dart';
 export 'package:owl_fp/data/bindings/theme.controller.binding.dart';
+export 'package:owl_fp/data/bindings/masterdata.controller.binding.dart';

@@ -81,5 +81,10 @@ class Nav {
       page: () => const ThemeScreen(),
       binding: ThemeControllerBinding(),
     ),
+    GetPage(
+      name: Routes.masterdata,
+      page: () => MasterdataScreen(),
+      binding: MasterdataControllerBinding(),
+    ),
   ];
 }

@@ -9,15 +9,12 @@ class SettingListModel {
 
 class FingerprintController extends GetxController {
   var optSetting = <SettingListModel>[
-    SettingListModel('Wifi', 1),
-    SettingListModel('Waktu Upload', 2),
-    SettingListModel('Client ID', 3),
-    SettingListModel('Alamat Server', 4),
-    SettingListModel('Tanggal & Jam', 5),
-    SettingListModel('Waktu Delete Absen', 6),
-    SettingListModel('Door Extension', 7),
-    SettingListModel('Log Absen', 8),
-    SettingListModel('Setting Device', 9),
+    SettingListModel('Wifi', 0),
+    SettingListModel('Waktu Upload', 1),
+    SettingListModel('Client ID', 2),
+    SettingListModel('Alamat Server', 3),
+    SettingListModel('Tanggal & Jam', 4),
+    SettingListModel('Waktu Delete Absen', 5),
   ].obs;
   var selectedSetting = ''.obs;
   var selectedSettingId = 0.obs;

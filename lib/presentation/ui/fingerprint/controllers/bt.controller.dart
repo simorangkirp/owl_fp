@@ -4,7 +4,9 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class BluetoothController extends GetxController {
   var devices = <BluetoothDevice>[].obs;
@@ -19,6 +21,23 @@ class BluetoothController extends GetxController {
       <BluetoothDiscoveryResult>[].obs;
   StreamSubscription<BluetoothDiscoveryResult>? _discoveryStream;
   var connectionStates = <String, bool>{}.obs;
+  var listReply = <String>[];
+
+  /// WIFI
+  var ssid = TextEditingController();
+  var wPwd = TextEditingController();
+
+  /// Waktu Upload
+  var wUpload = TextEditingController();
+
+  /// Client Secret
+  var csTCtrl = TextEditingController();
+
+  /// Waktu Delete
+  var wdTCtrl = TextEditingController();
+
+  /// Alamat Server
+  var uriTCtrl = TextEditingController();
 
   @override
   void onInit() {
@@ -60,25 +79,43 @@ class BluetoothController extends GetxController {
           // Jalankan proses async
           Future.delayed(const Duration(milliseconds: 500));
           await startDiscovery();
-
-          // Tutup dialog saat proses selesai
-          // if (Get.isDialogOpen == true) {
-          //   Get.back();
-          // }
         } finally {
           if (Get.isDialogOpen == true) Get.back();
         }
-        // catch (e) {
-        //   // Tutup dialog kalau error
-        //   if (Get.isDialogOpen == true) Get.back();
-
-        //   // Tampilkan pesan error
-        //   Get.snackbar("Error", e.toString());
-        // }
       } else {
         await FlutterBluetoothSerial.instance.requestEnable();
       }
     }
+  }
+
+  Future<void> waitRegist() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Get.dialog(
+        Dialog(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Registrasi Finger',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                const CircularProgressIndicator(),
+                SizedBox(height: 12.h),
+                Text('Silahkan letakan jari anda ke sensor!')
+                // Text("Menemukan ${deviceFound.value.toString()} perangkat.")
+              ],
+            ),
+          ),
+        ),
+        barrierDismissible: true,
+      );
+    });
   }
 
   Future<void> startDiscovery() async {
@@ -120,16 +157,9 @@ class BluetoothController extends GetxController {
       connectionStates[device.address] = true;
 
       connection!.input!.listen((data) {
-        Get.snackbar(
-          '',
-          "Berhasil Terhubung!",
-          titleText: const SizedBox.shrink(),
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.black87,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 2), // Supaya tidak hilang otomatis
-          margin: const EdgeInsets.all(12),
-        );
+        var matches = RegExp(r'"(.*?)"').allMatches(String.fromCharCodes(data));
+        listReply = matches.map((m) => m.group(1)!).toList();
+
         log('Received: ${String.fromCharCodes(data)}');
       });
     } catch (e) {
@@ -137,11 +167,106 @@ class BluetoothController extends GetxController {
     }
   }
 
-  void send(String data) {
-    if (connection != null && connection!.isConnected) {
-      connection!.output.add(Uint8List.fromList(data.codeUnits));
-      connection!.output.allSent;
+  Future<void> sendRegist() async {
+    try {
+      //! Regist
+      // String data = "r\n123\npatrick\n?\n1234";
+      //! Delete
+      String data = "5\n123\n?\n1234";
+      // Jalankan proses async
+      if (connection != null && connection!.isConnected) {
+        connection!.output.add(Uint8List.fromList(data.codeUnits));
+        await connection!.output.allSent;
+
+        await Future.delayed(const Duration(seconds: 3)).then((value) {
+          // ❗️Dialog hanya ditutup setelah pengiriman sukses (jika kamu mau)
+          Get.back();
+          if (listReply.isNotEmpty) {
+            displayReply();
+          }
+        });
+      }
+    } catch (e) {
+      // Tampilkan error (jika perlu)
+      Get.snackbar("Error", e.toString());
+      if (Get.isDialogOpen == true) Get.back(); // ❗️Tutup jika error
     }
+  }
+
+  Future<void> send(String args, int id) async {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Get.dialog(
+        Dialog(
+          insetPadding:
+              EdgeInsets.symmetric(horizontal: 0.1.sw, vertical: 0.2.sh),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 24.h),
+                Text("Mengirimkan perintah!.")
+              ],
+            ),
+          ),
+        ),
+        barrierDismissible: false,
+      );
+    });
+    try {
+      String data = "";
+      switch (id) {
+        case 0:
+          data = "w\n${ssid.text}\np\n${wPwd.text}\n?\n$args";
+          break;
+        case 1:
+          data = "u\n${wUpload.text}\n?\n$args";
+          break;
+        case 2:
+          data = "c\ngpsraw";
+          break;
+        case 3:
+          data = "i\n${uriTCtrl.text}\n?\n$args";
+          break;
+        case 4:
+          break;
+        case 5:
+          data = "1\n${wdTCtrl.text}\n?\n$args";
+          break;
+      }
+      // Jalankan proses async
+      if (connection != null && connection!.isConnected) {
+        connection!.output.add(Uint8List.fromList(data.codeUnits));
+        await connection!.output.allSent;
+
+        await Future.delayed(const Duration(seconds: 3)).then((value) {
+          // ❗️Dialog hanya ditutup setelah pengiriman sukses (jika kamu mau)
+          Get.back();
+          if (listReply.isNotEmpty) {
+            displayReply();
+          }
+        });
+      }
+    } catch (e) {
+      // Tampilkan error (jika perlu)
+      Get.snackbar("Error", e.toString());
+      if (Get.isDialogOpen == true) Get.back(); // ❗️Tutup jika error
+    }
+  }
+
+  void displayReply() {
+    Get.snackbar(
+      '',
+      listReply[1],
+      titleText: const SizedBox.shrink(),
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.black87,
+      colorText: Colors.white,
+      duration: const Duration(seconds: 2), // Supaya tidak hilang otomatis
+      margin: const EdgeInsets.all(12),
+    );
+    listReply.clear();
   }
 
   void disconnect() {

@@ -14,4 +14,5 @@ class Routes {
   static const sampletext = '/sampletext';
   static const setup = '/setup';
   static const theme = '/theme';
+  static const masterdata = '/masterdata';
 }

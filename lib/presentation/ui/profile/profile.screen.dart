@@ -16,7 +16,7 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('ProfileScreen'),
+        title: const Text('Profile'),
         centerTitle: true,
       ),
       body: Padding(
@@ -39,7 +39,7 @@ class ProfileScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Nama Pengguna",
+                      controller.users.value?.name ?? "-",
                       style: theme.titleLarge
                           ?.copyWith(fontWeight: FontWeight.w700),
                     ),
@@ -55,7 +55,7 @@ class ProfileScreen extends StatelessWidget {
             Text("Nama Pengguna:", style: theme.labelMedium),
             SizedBox(height: 4.h),
             Text(
-              "Nama Pengguna",
+              controller.users.value?.name ?? "-",
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: theme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
@@ -70,7 +70,7 @@ class ProfileScreen extends StatelessWidget {
             ),
             SizedBox(height: 4.h),
             Text(
-              "Nama Pengguna",
+              controller.users.value?.lokasitugas ?? "-",
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: theme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
@@ -85,7 +85,7 @@ class ProfileScreen extends StatelessWidget {
             ),
             SizedBox(height: 4.h),
             Text(
-              "Nama Pengguna",
+              controller.users.value?.bagian ?? "-",
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: theme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
@@ -100,7 +100,7 @@ class ProfileScreen extends StatelessWidget {
             ),
             SizedBox(height: 4.h),
             Text(
-              "Nama Pengguna",
+              controller.users.value?.jabatan ?? "-",
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: theme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
@@ -129,16 +129,21 @@ class ProfileScreen extends StatelessWidget {
               style: theme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
             ),
             SizedBox(height: 12.h),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Sinkronisasi Master Data",
-                  style: theme.labelLarge,
-                ),
-                Icon(Icons.chevron_right_rounded)
-              ],
+            GestureDetector(
+              onTap: () {
+                controller.confirmDialog();
+              },
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Sinkronisasi Master Data",
+                    style: theme.labelLarge,
+                  ),
+                  Icon(Icons.chevron_right_rounded)
+                ],
+              ),
             ),
             SizedBox(height: 4.h),
             Divider(
@@ -235,7 +240,9 @@ class ProfileScreen extends StatelessWidget {
             ),
             SizedBox(height: 16.h),
             OutlinedButton(
-              onPressed: () {},
+              onPressed: () {
+                controller.logOut();
+              },
               child: Text(
                 "Keluar",
                 style: theme.titleLarge,

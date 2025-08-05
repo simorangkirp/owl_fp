@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:owl_fp/presentation/ui/fingerprint/controllers/bt.controller.dart';
 
 import '../../../constant.dart';
 import '../controllers/fingerprint.controller.dart';
@@ -8,13 +9,89 @@ import '../controllers/fingerprint.controller.dart';
 class SettingComponents extends StatelessWidget {
   SettingComponents({super.key});
   final controller = Get.find<FingerprintController>();
+  final btctrl = Get.find<BluetoothController>();
 
   @override
   Widget build(BuildContext context) {
-    Widget defaultWg() {
+    final theme = Theme.of(context).textTheme;
+    var authTCtrl = TextEditingController();
+    var args = "";
+
+    opendialog() {
+      return Get.dialog(
+        Dialog(
+          insetPadding:
+              EdgeInsets.symmetric(horizontal: 0.1.sw, vertical: 0.2.sh),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text("Otentikasi"),
+                SizedBox(height: 12.h),
+                const Text("Masukkan Password!."),
+                SizedBox(height: 8.h),
+                TextField(
+                  controller: authTCtrl,
+                  onChanged: (value) {
+                    args = value;
+                  },
+                ),
+                SizedBox(height: 12.h),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    fixedSize: Size(double.maxFinite, 42.h),
+                  ),
+                  onPressed: () {
+                    authTCtrl.clear();
+                    Get.back();
+                    btctrl.send(args, controller.selectedSettingId.value);
+                  },
+                  child: const Text('Kirim'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    Widget wifi() {
       return Column(
         children: [
-          Text("Pilih Tanggal"),
+          TextField(
+            controller: btctrl.ssid,
+            decoration: const InputDecoration(
+              hintText: 'SSID',
+            ),
+          ),
+          SizedBox(height: 8.h),
+          TextField(
+            controller: btctrl.wPwd,
+            decoration: const InputDecoration(
+              hintText: 'Password',
+            ),
+          ),
+          SizedBox(height: 12.h),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              fixedSize: Size(double.maxFinite, 42.h),
+            ),
+            onPressed: () {
+              opendialog();
+            },
+            child: const Text('Kirim'),
+          ),
+        ],
+      );
+    }
+
+    Widget tgljam() {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text("Pilih Tanggal"),
           SizedBox(height: 8.h),
           InkWell(
             onTap: () async {
@@ -35,7 +112,7 @@ class SettingComponents extends StatelessWidget {
             ),
           ),
           SizedBox(height: 12.h),
-          Text("Pilih Jam"),
+          const Text("Pilih Jam"),
           SizedBox(height: 8.h),
           InkWell(
             onTap: () async {
@@ -57,8 +134,11 @@ class SettingComponents extends StatelessWidget {
           ),
           SizedBox(height: 12.h),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              fixedSize: Size(double.maxFinite, 42.h),
+            ),
             onPressed: () {},
-            child: Text('Kirim'),
+            child: const Text('Kirim'),
           ),
         ],
       );
@@ -69,7 +149,10 @@ class SettingComponents extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: TextField()),
+              Expanded(
+                  child: TextField(
+                controller: btctrl.wdTCtrl,
+              )),
               SizedBox(width: 24.w),
               Expanded(
                 child: DropdownButtonFormField<String>(
@@ -96,10 +179,13 @@ class SettingComponents extends StatelessWidget {
               ),
             ],
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: 12.h),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              fixedSize: Size(double.maxFinite, 42.h),
+            ),
             onPressed: () {},
-            child: Text('Kirim'),
+            child: const Text('Kirim'),
           ),
         ],
       );
@@ -109,17 +195,36 @@ class SettingComponents extends StatelessWidget {
       return Column(
         children: [
           TextField(),
-          SizedBox(height: 8.h),
+          SizedBox(height: 12.h),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              fixedSize: Size(double.maxFinite, 42.h),
+            ),
             onPressed: () {},
-            child: Text('Kirim'),
+            child: const Text('Kirim'),
           ),
         ],
       );
     }
 
-    void timePicker() {
-      // return null;
+    Widget serveruri() {
+      return Column(
+        children: [
+          TextField(
+            controller: btctrl.uriTCtrl,
+          ),
+          SizedBox(height: 12.h),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              fixedSize: Size(double.maxFinite, 42.h),
+            ),
+            onPressed: () {
+              opendialog();
+            },
+            child: const Text('Kirim'),
+          ),
+        ],
+      );
     }
 
     Widget waktuUpload() {
@@ -127,30 +232,46 @@ class SettingComponents extends StatelessWidget {
         children: [
           Row(
             children: [
-              Expanded(child: TextField()),
+              Expanded(
+                  child: TextField(
+                controller: btctrl.wUpload,
+              )),
               SizedBox(width: 12.w),
-              Text("menit"),
+              const Text("menit"),
             ],
           ),
-          SizedBox(height: 8.h),
+          SizedBox(height: 12.h),
           ElevatedButton(
-            onPressed: () {},
-            child: Text('Kirim'),
+            style: ElevatedButton.styleFrom(
+              fixedSize: Size(double.maxFinite, 42.h),
+            ),
+            onPressed: () {
+              opendialog();
+            },
+            child: const Text('Kirim'),
           ),
         ],
       );
     }
 
-    Widget setupWifi() {
+    Widget clientsecret() {
       return Column(
         children: [
-          TextField(),
-          SizedBox(height: 8.h),
-          TextField(),
-          SizedBox(height: 8.h),
+          TextField(
+            controller: btctrl.csTCtrl,
+            decoration: const InputDecoration(
+              hintText: 'Client Secret',
+            ),
+          ),
+          SizedBox(height: 12.h),
           ElevatedButton(
-            onPressed: () {},
-            child: Text('Kirim'),
+            style: ElevatedButton.styleFrom(
+              fixedSize: Size(double.maxFinite, 42.h),
+            ),
+            onPressed: () {
+              opendialog();
+            },
+            child: const Text('Kirim'),
           ),
         ],
       );
@@ -177,7 +298,11 @@ class SettingComponents extends StatelessWidget {
                     ))
                 .toList(),
             onChanged: (value) {
+              final selected = controller.optSetting
+                  .firstWhereOrNull((element) => element.nm == value);
+              controller.selectedSettingId.value = selected?.id ?? 0;
               controller.selectedSetting.value = value ?? "";
+              controller.selectedSettingId.value = selected?.id ?? 0;
             },
             validator: (value) {
               if (value == null) {
@@ -187,13 +312,21 @@ class SettingComponents extends StatelessWidget {
             },
           ),
           SizedBox(height: 12.h),
-          controller.selectedSettingId.value == 0
-              ? defaultWg()
-              : controller.selectedSettingId.value == 1
-                  ? waktuUpload()
-                  : controller.selectedSettingId.value == 6
-                      ? waktuDelete()
-                      : defWg(),
+          Obx(
+            () => controller.selectedSettingId.value == 0
+                ? wifi()
+                : controller.selectedSettingId.value == 1
+                    ? waktuUpload()
+                    : controller.selectedSettingId.value == 2
+                        ? clientsecret()
+                        : controller.selectedSettingId.value == 3
+                            ? serveruri()
+                            : controller.selectedSettingId.value == 4
+                                ? tgljam()
+                                : controller.selectedSettingId.value == 5
+                                    ? waktuDelete()
+                                    : defWg(),
+          ),
         ],
       ),
     );

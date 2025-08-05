@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
+import '../../../../domain/usecase/dashboard/master.list.usecase.dart';
+
 class DashboardMenuModel {
   String menuNm;
   String path;
@@ -10,6 +12,8 @@ class DashboardMenuModel {
 }
 
 class DashboardController extends GetxController {
+  final GetMasterHeaderUseCase _masterHeader;
+  DashboardController(this._masterHeader);
   var menuItem = <DashboardMenuModel>[
     DashboardMenuModel(
       "Fingerprint",
@@ -21,32 +25,28 @@ class DashboardController extends GetxController {
       '/dashboard',
       LucideIcons.milk,
     ),
-    // DashboardMenuModel(
-    //   "Setup",
-    //   '/setup',
-    //   Icons.settings,
-    // ),
-    // DashboardMenuModel(
-    //   "About",
-    //   '/about',
-    //   Icons.info_outline,
-    // ),
   ].obs;
-  final count = 0.obs;
+
+  var listMD = [].obs;
+
+  Future<List<String>> getMasterHeader() async {
+    var response = await _masterHeader.execute();
+    return response;
+  }
+
   @override
-  void onInit() {
+  void onInit() async {
+    listMD.value = await getMasterHeader();
     super.onInit();
   }
 
-  @override
-  void onReady() {
-    super.onReady();
-  }
+  // @override
+  // void onReady() {
+  //   super.onReady();
+  // }
 
-  @override
-  void onClose() {
-    super.onClose();
-  }
-
-  void increment() => count.value++;
+  // @override
+  // void onClose() {
+  //   super.onClose();
+  // }
 }

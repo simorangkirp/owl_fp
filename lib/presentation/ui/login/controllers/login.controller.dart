@@ -7,10 +7,14 @@ import 'package:get/get.dart';
 import '../../../../core/error/exception.handler.dart';
 import '../../../../data/dal/services/get.storage.dart';
 import '../../../../domain/usecase/auth/login.usecase.dart';
+import '../../../../domain/usecase/auth/profile.usecase.dart';
+import '../../../../domain/usecase/masterdata/master.usecase.dart';
 
 class LoginController extends GetxController {
   final LoginUseCase _loginUseCase;
-  LoginController(this._loginUseCase);
+  final ProfileUseCase _profileUseCase;
+  final SyncMasterDataUseCase _syncUseCase;
+  LoginController(this._loginUseCase, this._profileUseCase, this._syncUseCase);
   final storage = Get.find<StorageService>();
 
   /// Text Controller
@@ -80,6 +84,8 @@ class LoginController extends GetxController {
     try {
       var res = await _loginUseCase.execute(unCtrl.text, pwCtrl.text);
       if (res) {
+        // await _profileUseCase.execute();
+        // await _syncUseCase.execute();
         var box = StorageService();
         box.saveIsLoggedIn(res);
         Get.snackbar(
@@ -114,7 +120,7 @@ class LoginController extends GetxController {
     urlCtrl.text = box.bUrl ?? "";
     super.onInit();
     // Delay sejenak supaya transition-nya smooth dan tidak konflik build
-    Future.delayed(Duration(milliseconds: 100), () {
+    Future.delayed(const Duration(milliseconds: 100), () {
       final isLoggedIn = box.isLoggedIn;
       if (isLoggedIn) {
         Get.offAllNamed('/home'); // Redirect langsung

@@ -12,10 +12,10 @@ class UpdownComponent extends StatelessWidget {
       padding: ConstPadding.screenPadding,
       child: ListView(
         children: [
-          Text("Registrasi Fingerprint"),
+          Text("Unduh & Kirim Template"),
           Divider(),
           SizedBox(height: 12.h),
-          Text("Pilih Karyawan:"),
+          Text("Pilih Menu:"),
           SizedBox(height: 8.h),
           TextField(),
           SizedBox(height: 12.h),

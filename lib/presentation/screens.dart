@@ -1,3 +1,4 @@
+export 'package:owl_fp/presentation/ui/masterdata/masterdata.screen.dart';
 export 'package:owl_fp/presentation/ui/about/about.screen.dart';
 export 'package:owl_fp/presentation/ui/dashboard/dashboard.screen.dart';
 export 'package:owl_fp/presentation/ui/fingerprint/fingerprint.screen.dart';
