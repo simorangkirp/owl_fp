@@ -18,6 +18,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() => Scaffold(
+          resizeToAvoidBottomInset: false,
           body: pages[controller.currentIndex.value],
           bottomNavigationBar: BottomNavigationBar(
             currentIndex: controller.currentIndex.value,

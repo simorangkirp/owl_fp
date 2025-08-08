@@ -12,7 +12,8 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
   @override
   Future<ProfileEntity> getUser() async {
-    final response = await localDataSource.user();
-    return response.toEntity();
+    var res = await localDataSource.getUser();
+    var data = res.toEntity();
+    return data;
   }
 }

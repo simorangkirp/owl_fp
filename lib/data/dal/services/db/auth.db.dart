@@ -1,8 +1,7 @@
-import '../../../model/profile.model.dart';
 import '../db.helper.dart';
 
 abstract class AuthLocalDataSource {
-  Future<bool> insertUser(ProfileModel user);
+  Future<void> insertUser(Map<String, dynamic> args);
   Future<void> deleteUser();
 }
 
@@ -11,14 +10,8 @@ class AuthLocalDataSourceImpl extends AuthLocalDataSource {
   AuthLocalDataSourceImpl({required this.databaseHelper});
 
   @override
-  Future<bool> insertUser(ProfileModel user) async {
-    try {
-      Map<String, dynamic> args = user.toJson();
-      await databaseHelper.insertUser(args);
-      return true;
-    } catch (e) {
-      return false;
-    }
+  Future<void> insertUser(Map<String, dynamic> args) async {
+    await databaseHelper.insertUser(args);
   }
 
   @override

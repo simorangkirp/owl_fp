@@ -3,7 +3,9 @@ import 'package:owl_fp/data/model/profile.model.dart';
 import '../db.helper.dart';
 
 abstract class ProfileLocalDataSource {
-  Future<ProfileModel> user();
+  Future<ProfileModel> getUser();
+  Future<void> saveUser(Map<String, dynamic> args);
+  Future<int> deleteUser();
 }
 
 class ProfileLocalDataSourceImpl extends ProfileLocalDataSource {
@@ -11,7 +13,7 @@ class ProfileLocalDataSourceImpl extends ProfileLocalDataSource {
   ProfileLocalDataSourceImpl({required this.databaseHelper});
 
   @override
-  Future<ProfileModel> user() async {
+  Future<ProfileModel> getUser() async {
     var response = await databaseHelper.getUser();
     if (response!.isNotEmpty) {
       return ProfileModel.fromJson(response);
@@ -49,5 +51,15 @@ class ProfileLocalDataSourceImpl extends ProfileLocalDataSource {
           phone: 'phone',
           regional: 'regional');
     }
+  }
+
+  @override
+  Future<void> saveUser(args) async {
+    var response = await databaseHelper.insertUser(args);
+  }
+
+  @override
+  Future<int> deleteUser() async {
+    return await databaseHelper.deleteUser();
   }
 }

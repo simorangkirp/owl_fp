@@ -84,7 +84,7 @@ class LoginController extends GetxController {
     try {
       var res = await _loginUseCase.execute(unCtrl.text, pwCtrl.text);
       if (res) {
-        // await _profileUseCase.execute();
+        await _profileUseCase.execute();
         // await _syncUseCase.execute();
         var box = StorageService();
         box.saveIsLoggedIn(res);

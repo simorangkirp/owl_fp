@@ -1,14 +1,14 @@
 import 'package:dio/dio.dart';
+import 'package:retrofit/retrofit.dart';
 
 import '../../../dio/dio.client.dart';
-import '../../../model/profile.model.dart';
 import '../get.storage.dart';
 
 abstract class AuthRemoteDataSource {
   Future<bool> login(
     Map<String, dynamic> payload,
   );
-  Future<ProfileModel> profile();
+  Future<HttpResponse<dynamic>> profile();
 }
 
 class AuthRemoteDataSourceImpl extends AuthRemoteDataSource {
@@ -35,14 +35,16 @@ class AuthRemoteDataSourceImpl extends AuthRemoteDataSource {
   }
 
   @override
-  Future<ProfileModel> profile() async {
+  Future<HttpResponse<dynamic>> profile() async {
     final box = StorageService();
-    final Response response = await dioClient.post(
+    final response = await dioClient.post(
       '${box.bUrl}/profile',
       options: Options(
         headers: {'api_key': box.token},
       ),
     );
-    return ProfileModel.fromJson(response.data['result']['empl']);
+    final value = response.data;
+    final httpResponse = HttpResponse(value, response);
+    return httpResponse;
   }
 }

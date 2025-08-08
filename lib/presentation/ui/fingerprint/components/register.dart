@@ -5,24 +5,57 @@ import 'package:get/get.dart';
 
 import '../../../constant.dart';
 import '../controllers/bt.controller.dart';
+import '../controllers/fingerprint.controller.dart';
 
 class RegisterComponent extends StatelessWidget {
   RegisterComponent({super.key});
   final btctrl = Get.find<BluetoothController>();
+  final controller = Get.find<FingerprintController>();
 
   @override
   Widget build(BuildContext context) {
-    final TextEditingController typeAheadController = TextEditingController();
-    final List<String> sglist = [
-      'Apple',
-      'Banana',
-      'Cherry',
-      'Durian',
-      'Grapes',
-      'Orange',
-      'Papaya',
-    ];
     final theme = Theme.of(context).textTheme;
+
+    opendialog() {
+      return Get.dialog(
+        Scaffold(
+          resizeToAvoidBottomInset: false,
+          body: Dialog(
+            insetPadding:
+                EdgeInsets.symmetric(horizontal: 0.1.sw, vertical: 0.2.sh),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text("Otentikasi"),
+                  SizedBox(height: 12.h),
+                  const Text("Masukkan Password!."),
+                  SizedBox(height: 8.h),
+                  TextField(
+                    controller: btctrl.authCtrl,
+                    onChanged: (value) {
+                      btctrl.authText = value;
+                    },
+                  ),
+                  SizedBox(height: 12.h),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      fixedSize: Size(double.maxFinite, 42.h),
+                    ),
+                    onPressed: () async {
+                      btctrl.authCtrl.clear();
+                      Get.back();
+                    },
+                    child: const Text('Kirim'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
 
     return Padding(
       padding: ConstPadding.screenPadding,
@@ -34,35 +67,40 @@ class RegisterComponent extends StatelessWidget {
           // Text("Pilih Karyawan:"),
           TypeAheadFormField(
             textFieldConfiguration: TextFieldConfiguration(
-              controller: typeAheadController,
+              controller: controller.typeAheadController,
               decoration: InputDecoration(
                 labelStyle: theme.labelLarge,
-                labelText: 'Cari buah',
+                labelText: 'Cari karyawan',
                 border: OutlineInputBorder(),
               ),
             ),
             suggestionsCallback: (pattern) {
-              return sglist.where(
-                  (item) => item.toLowerCase().contains(pattern.toLowerCase()));
+              return controller.karyawanlist.where((item) {
+                var name = item.namakaryawan ?? "Undefined";
+                return name.toLowerCase().contains(pattern.toLowerCase());
+              });
             },
             itemBuilder: (context, suggestion) {
-              return ListTile(title: Text(suggestion));
+              return ListTile(title: Text(suggestion.namakaryawan ?? ""));
             },
             onSuggestionSelected: (suggestion) {
-              typeAheadController.text = suggestion;
+              btctrl.selectedRegisterNm = suggestion.namakaryawan ?? "";
+              btctrl.selectedRegisterNIK = suggestion.nik ?? "";
+              controller.typeAheadController.text =
+                  suggestion.namakaryawan ?? "";
             },
           ),
           Visibility(
-              visible: typeAheadController.text.isNotEmpty,
+              visible: controller.typeAheadController.text.isNotEmpty,
               child: SizedBox(height: 8.h)),
           Visibility(
-              visible: typeAheadController.text.isNotEmpty,
+              visible: controller.typeAheadController.text.isNotEmpty,
               child: Text("Pattern")),
           Visibility(
-              visible: typeAheadController.text.isNotEmpty,
+              visible: controller.typeAheadController.text.isNotEmpty,
               child: SizedBox(height: 8.h)),
           Visibility(
-            visible: typeAheadController.text.isNotEmpty,
+            visible: controller.typeAheadController.text.isNotEmpty,
             child: Container(
               width: double.maxFinite,
               height: 0.3.sh,
@@ -71,9 +109,11 @@ class RegisterComponent extends StatelessWidget {
           ),
           SizedBox(height: 12.h),
           ElevatedButton(
-            onPressed: () async {
-              btctrl.waitRegist();
-              await btctrl.sendRegist();
+            onPressed: () {
+              opendialog().then((value) async {
+                btctrl.waitRegist();
+                await btctrl.sendRegist();
+              });
             },
             child: Text('Kirim'),
           ),

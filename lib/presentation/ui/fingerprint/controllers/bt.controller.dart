@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:typed_data';
 
@@ -7,6 +8,8 @@ import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:owl_fp/data/model/karyawan.model.dart';
+import 'package:owl_fp/domain/entity/karyawan.entity.dart';
 
 class BluetoothController extends GetxController {
   var devices = <BluetoothDevice>[].obs;
@@ -23,6 +26,8 @@ class BluetoothController extends GetxController {
   var connectionStates = <String, bool>{}.obs;
   var listReply = <String>[];
 
+  StringBuffer buffer = StringBuffer();
+
   /// WIFI
   var ssid = TextEditingController();
   var wPwd = TextEditingController();
@@ -38,6 +43,19 @@ class BluetoothController extends GetxController {
 
   /// Alamat Server
   var uriTCtrl = TextEditingController();
+
+  /// Authentication
+  var authCtrl = TextEditingController();
+  var authText = '';
+
+  ///
+
+  /// Register Finger
+  var selectedRegisterNm = "";
+  var selectedRegisterNIK = "";
+  RxBool isDone = false.obs;
+
+  ///
 
   @override
   void onInit() {
@@ -116,6 +134,12 @@ class BluetoothController extends GetxController {
         barrierDismissible: true,
       );
     });
+    // Pantau kondisi isRegistered dan tutup dialog jika true
+    ever(isDone, (registered) {
+      if (registered == true && Get.isDialogOpen == true) {
+        Get.back(); // menutup dialog
+      }
+    });
   }
 
   Future<void> startDiscovery() async {
@@ -157,10 +181,43 @@ class BluetoothController extends GetxController {
       connectionStates[device.address] = true;
 
       connection!.input!.listen((data) {
-        var matches = RegExp(r'"(.*?)"').allMatches(String.fromCharCodes(data));
-        listReply = matches.map((m) => m.group(1)!).toList();
+        // var matches = RegExp(r'"(.*?)"').allMatches(String.fromCharCodes(data));
+        // listReply = matches.map((m) => m.group(1)!).toList();
 
-        log('Received: ${String.fromCharCodes(data)}');
+        // log('Received: ${String.fromCharCodes(data)}');
+        // Map<String, dynamic> jsonMap = json.decode(String.fromCharCodes(data));
+
+        // if (jsonMap.containsKey("perintah")) {
+        //   isDone.value = true;
+        // }
+
+        final chunk = String.fromCharCodes(data);
+        log('chunk: $chunk');
+
+        buffer.write(chunk);
+
+        // Coba decode JSON dari buffer
+        try {
+          String raw = String.fromCharCodes(data).trim();
+          if (raw.isNotEmpty && raw != " ") {
+            final jsonMap = json.decode(raw);
+
+            // Jika berhasil decode, cek key
+            if (jsonMap is Map<String, dynamic> &&
+                jsonMap.containsKey("perintah")) {
+              isDone.value = true;
+              log("Ditemukan perintah: ${jsonMap["perintah"]}");
+              buffer.clear(); // Reset setelah berhasil
+            }
+          } else {
+            isDone.value = true;
+            log("Raw String: $raw");
+            buffer.clear(); // Reset setelah berhasil
+          }
+        } catch (e) {
+          // JSON belum lengkap → jangan di-clear
+          log("Belum bisa decode JSON: $e");
+        }
       });
     } catch (e) {
       Get.snackbar('Error', 'Gagal konek: $e');
@@ -170,24 +227,15 @@ class BluetoothController extends GetxController {
   Future<void> sendRegist() async {
     try {
       //! Regist
-      // String data = "r\n123\npatrick\n?\n1234";
+      String data =
+          "r\n$selectedRegisterNIK\n$selectedRegisterNIK\n?\n$authText";
       //! Delete
-      String data = "5\n123\n?\n1234";
-      // Jalankan proses async
+      isDone.value = false;
       if (connection != null && connection!.isConnected) {
         connection!.output.add(Uint8List.fromList(data.codeUnits));
         await connection!.output.allSent;
-
-        await Future.delayed(const Duration(seconds: 3)).then((value) {
-          // ❗️Dialog hanya ditutup setelah pengiriman sukses (jika kamu mau)
-          Get.back();
-          if (listReply.isNotEmpty) {
-            displayReply();
-          }
-        });
       }
     } catch (e) {
-      // Tampilkan error (jika perlu)
       Get.snackbar("Error", e.toString());
       if (Get.isDialogOpen == true) Get.back(); // ❗️Tutup jika error
     }
@@ -196,18 +244,21 @@ class BluetoothController extends GetxController {
   Future<void> send(String args, int id) async {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Get.dialog(
-        Dialog(
-          insetPadding:
-              EdgeInsets.symmetric(horizontal: 0.1.sw, vertical: 0.2.sh),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 24.h),
-                Text("Mengirimkan perintah!.")
-              ],
+        Scaffold(
+          resizeToAvoidBottomInset: false,
+          body: Dialog(
+            insetPadding:
+                EdgeInsets.symmetric(horizontal: 0.1.sw, vertical: 0.2.sh),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 24.h),
+                  Text("Mengirimkan perintah!.")
+                ],
+              ),
             ),
           ),
         ),

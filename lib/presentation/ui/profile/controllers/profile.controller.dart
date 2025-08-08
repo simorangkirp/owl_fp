@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:owl_fp/domain/entity/karyawan.entity.dart';
 import 'package:owl_fp/domain/entity/profile.entity.dart';
 
 import '../../../../data/dal/services/get.storage.dart';

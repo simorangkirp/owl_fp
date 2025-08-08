@@ -100,8 +100,103 @@ class DatabaseHelper {
         var masterlist = [
           {'name': 'Karyawan'},
         ];
+
+        //     no INTEGER,
+        //         key TEXT,
+        //         value TEXT,
+        //         menu TEXT,
+        //         submenu TEXT
+        var dropdownlist = [
+          {
+            'no': 0,
+            'key': 'wifi',
+            'value': 'Wifi',
+            'menu': 'fingerprint',
+            'submenu': 'setting'
+          },
+          {
+            'no': 1,
+            'key': 'waktuupload',
+            'value': 'Waktu Upload',
+            'menu': 'fingerprint',
+            'submenu': 'setting'
+          },
+          {
+            'no': 2,
+            'key': 'clientid',
+            'value': 'Client ID',
+            'menu': 'fingerprint',
+            'submenu': 'setting'
+          },
+          {
+            'no': 3,
+            'key': 'alamatserver',
+            'value': 'Alamat Server',
+            'menu': 'fingerprint',
+            'submenu': 'setting'
+          },
+          {
+            'no': 4,
+            'key': 'tanggaljam',
+            'value': 'Tanggal & Jam',
+            'menu': 'fingerprint',
+            'submenu': 'setting'
+          },
+          {
+            'no': 5,
+            'key': 'waktudeleteabsen',
+            'value': 'Waktu Delete Absen',
+            'menu': 'fingerprint',
+            'submenu': 'setting'
+          },
+          {
+            'no': 1,
+            'key': 'downloadtemplate',
+            'value': 'Download Template dari Finger',
+            'menu': 'fingerprint',
+            'submenu': 'downloadupload'
+          },
+          {
+            'no': 2,
+            'key': 'downloadtemplatenik',
+            'value': 'Download Template per NIK',
+            'menu': 'fingerprint',
+            'submenu': 'downloadupload'
+          },
+          {
+            'no': 3,
+            'key': 'uploadtemplatemobilefinger',
+            'value': 'Upload Template dari Mobile ke Fingerprint',
+            'menu': 'fingerprint',
+            'submenu': 'downloadupload'
+          },
+          {
+            'no': 1,
+            'key': 'gantipin',
+            'value': 'Ganti Pin',
+            'menu': 'fingerprint',
+            'submenu': 'admin'
+          },
+          {
+            'no': 2,
+            'key': 'tambahadmin',
+            'value': 'Tambah Admin Fingerprint',
+            'menu': 'fingerprint',
+            'submenu': 'admin'
+          },
+          {
+            'no': 3,
+            'key': 'deletebynik',
+            'value': 'Delete Fingerprint by NIK',
+            'menu': 'fingerprint',
+            'submenu': 'admin'
+          },
+        ];
         for (var element in masterlist) {
           db.insert(_tblMasterHeader, element);
+        }
+        for (var element in dropdownlist) {
+          db.insert(_tblDDList, element);
         }
       },
     );
@@ -131,6 +226,28 @@ class DatabaseHelper {
       whereArgs: ['%$query%'],
     );
     return results.map((e) => e['name'] as String).toList();
+  }
+
+  Future<List<KaryawanModel>?> searchKaryawanTuple(String query) async {
+    final db = await database;
+    final List<Map<String, dynamic>> results = await db.query(
+      _tblKaryawan,
+      where: '''
+    namakaryawan LIKE ? OR 
+    nik LIKE ? OR 
+    lokasitugas LIKE ?
+  ''',
+      whereArgs: [
+        '%$query%',
+        '%$query%',
+        '%$query%',
+      ],
+    );
+    var res = <KaryawanModel>[];
+    for (var element in results) {
+      res.add(KaryawanModel.fromJson(element));
+    }
+    return res;
   }
 
   //Insert User

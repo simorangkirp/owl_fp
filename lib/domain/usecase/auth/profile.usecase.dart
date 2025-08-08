@@ -1,4 +1,5 @@
-import '../../entity/profile.entity.dart';
+import 'package:owl_fp/core/resources/data.state.dart';
+
 import '../../repository/auth.repo.dart';
 
 class ProfileUseCase {
@@ -6,7 +7,7 @@ class ProfileUseCase {
 
   ProfileUseCase(this.repository);
 
-  Future<ProfileEntity> execute() {
-    return repository.profile();
+  Future<DataState> execute() {
+    return repository.getProfile();
   }
 }

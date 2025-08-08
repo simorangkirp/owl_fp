@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../domain/entity/karyawan.entity.dart';
+import '../../../../domain/usecase/masterdata/find.karyawan.usecase.dart';
+
 class SettingListModel {
   String nm;
   int id;
@@ -8,6 +11,9 @@ class SettingListModel {
 }
 
 class FingerprintController extends GetxController {
+  final FindKaryawanTupleUseCase _searchKaryawan;
+  FingerprintController(this._searchKaryawan);
+
   var optSetting = <SettingListModel>[
     SettingListModel('Wifi', 0),
     SettingListModel('Waktu Upload', 1),
@@ -38,6 +44,21 @@ class FingerprintController extends GetxController {
   var selectedtod = ''.obs;
   var selectedDt = ''.obs;
 
+  // Variabels
+  var typeAheadController = TextEditingController()..text = "";
+
+  // List Karyawan
+  var karyawanlist = <KaryawanEntity>[].obs;
+
+  // Function List
+  Future<List<KaryawanEntity>?> searchData() async {
+    var res = await _searchKaryawan.execute(typeAheadController.text);
+    if (res != null) {
+      karyawanlist.value = res;
+    }
+    return res;
+  }
+
   changeTod(TimeOfDay value) {
     selectedtod.value = '${value.hour}:${value.minute}';
   }
@@ -48,6 +69,7 @@ class FingerprintController extends GetxController {
 
   @override
   Future<void> onInit() async {
+    await searchData();
     super.onInit();
   }
 

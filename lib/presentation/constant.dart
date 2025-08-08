@@ -4,6 +4,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 class ConstPadding {
   static var screenPadding =
       EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h);
+  static var listcontentPadding = EdgeInsets.symmetric(horizontal: 16.w);
   static var ddBtnPadding =
       EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w);
   static var eleBtnPadding =

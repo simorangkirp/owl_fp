@@ -28,7 +28,7 @@ class Nav {
   static List<GetPage> routes = [
     GetPage(
       name: Routes.MASTERDATA,
-      page: () => const MasterdataScreen(),
+      page: () =>  MasterdataScreen(),
       binding: MasterdataControllerBinding(),
     ),
   ];
