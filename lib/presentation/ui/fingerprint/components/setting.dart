@@ -13,10 +13,6 @@ class SettingComponents extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context).textTheme;
-    var authTCtrl = TextEditingController();
-    var args = "";
-
     opendialog() {
       return Get.dialog(
         Dialog(
@@ -32,9 +28,9 @@ class SettingComponents extends StatelessWidget {
                 const Text("Masukkan Password!."),
                 SizedBox(height: 8.h),
                 TextField(
-                  controller: authTCtrl,
+                  controller: controller.authDialogCtrl,
                   onChanged: (value) {
-                    args = value;
+                    controller.authDialogArg = value;
                   },
                 ),
                 SizedBox(height: 12.h),
@@ -43,9 +39,10 @@ class SettingComponents extends StatelessWidget {
                     fixedSize: Size(double.maxFinite, 42.h),
                   ),
                   onPressed: () {
-                    authTCtrl.clear();
+                    controller.authDialogCtrl.clear();
                     Get.back();
-                    btctrl.send(args, controller.selectedSettingId.value);
+                    btctrl.send(controller.authDialogArg,
+                        controller.selectedSettingId.value);
                   },
                   child: const Text('Kirim'),
                 ),
@@ -155,26 +152,28 @@ class SettingComponents extends StatelessWidget {
               )),
               SizedBox(width: 24.w),
               Expanded(
-                child: DropdownButtonFormField<String>(
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
+                child: Obx(
+                  () => DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      border: OutlineInputBorder(),
+                    ),
+                    value: controller.timeOpt.first,
+                    items: controller.timeOpt
+                        .map((option) => DropdownMenuItem(
+                              value: option,
+                              child: Text(option),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      controller.selectedTime.value = value ?? "";
+                    },
+                    validator: (value) {
+                      if (value == null) {
+                        return 'Please select an option';
+                      }
+                      return null;
+                    },
                   ),
-                  value: controller.timeOpt.first,
-                  items: controller.timeOpt
-                      .map((option) => DropdownMenuItem(
-                            value: option,
-                            child: Text(option),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    controller.selectedTime.value = value ?? "";
-                  },
-                  validator: (value) {
-                    if (value == null) {
-                      return 'Please select an option';
-                    }
-                    return null;
-                  },
                 ),
               ),
             ],
@@ -286,30 +285,32 @@ class SettingComponents extends StatelessWidget {
           SizedBox(height: 12.h),
           Text("Pilih Menu"),
           SizedBox(height: 8.h),
-          DropdownButtonFormField<String>(
-            decoration: const InputDecoration(
-              border: OutlineInputBorder(),
+          Obx(
+            () => DropdownButtonFormField<String>(
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+              ),
+              value: controller.optSetting.first.value,
+              items: controller.optSetting
+                  .map((option) => DropdownMenuItem(
+                        value: option.value,
+                        child: Text(option.value ?? ""),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                final selected = controller.optSetting
+                    .firstWhereOrNull((element) => element.value == value);
+                controller.selectedSettingId.value = selected?.no ?? 0;
+                controller.selectedSetting.value = value ?? "";
+                controller.selectedSettingId.value = selected?.no ?? 0;
+              },
+              validator: (value) {
+                if (value == null) {
+                  return 'Please select an option';
+                }
+                return null;
+              },
             ),
-            value: controller.optSetting.first.nm,
-            items: controller.optSetting
-                .map((option) => DropdownMenuItem(
-                      value: option.nm,
-                      child: Text(option.nm),
-                    ))
-                .toList(),
-            onChanged: (value) {
-              final selected = controller.optSetting
-                  .firstWhereOrNull((element) => element.nm == value);
-              controller.selectedSettingId.value = selected?.id ?? 0;
-              controller.selectedSetting.value = value ?? "";
-              controller.selectedSettingId.value = selected?.id ?? 0;
-            },
-            validator: (value) {
-              if (value == null) {
-                return 'Please select an option';
-              }
-              return null;
-            },
           ),
           SizedBox(height: 12.h),
           Obx(

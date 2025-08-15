@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../core/error/exception.handler.dart';
 import '../../../../data/dal/services/get.storage.dart';
@@ -41,6 +43,9 @@ class LoginController extends GetxController {
   /// Timers
   Timer? _resetTimer;
 
+  // Bool Args
+  RxBool isLogin = false.obs;
+
   void displayUrl() {
     if (!isShown.value) {
       _resetTimer?.cancel();
@@ -74,20 +79,38 @@ class LoginController extends GetxController {
     Future.delayed(const Duration(seconds: 1));
   }
 
-  void login(String username, String token) {
-    storage.saveIsLoggedIn(true);
-    storage.saveUsername(username);
-    storage.saveToken(token);
-  }
-
-  Future<void> onLogin() async {
-    try {
-      var res = await _loginUseCase.execute(unCtrl.text, pwCtrl.text);
-      if (res) {
-        await _profileUseCase.execute();
-        // await _syncUseCase.execute();
-        var box = StorageService();
-        box.saveIsLoggedIn(res);
+  Future<void> loginDialog() async {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Get.dialog(
+        Dialog(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Login',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                SizedBox(height: 24.h),
+                const CircularProgressIndicator(),
+                SizedBox(height: 12.h),
+                Text('Sedang mencoba masuk kedalam aplikasi.')
+                // Text("Menemukan ${deviceFound.value.toString()} perangkat.")
+              ],
+            ),
+          ),
+        ),
+        barrierDismissible: true,
+      );
+    });
+    // Pantau kondisi isRegistered dan tutup dialog jika true
+    ever(isLogin, (val) async {
+      if (val == true && Get.isDialogOpen == true) {
+        Get.back(); // menutup dialog
         Get.snackbar(
           '',
           "Berhasil Login!",
@@ -99,6 +122,35 @@ class LoginController extends GetxController {
           margin: const EdgeInsets.all(12),
         );
         Get.toNamed('/home');
+      }
+    });
+  }
+
+  Future<void> getProfileApi() async {
+    try {
+      await _profileUseCase.execute();
+      isLogin.value = true;
+    } on ExceptionHandler catch (e) {
+      Get.snackbar(
+        '',
+        e.toString(),
+        titleText: const SizedBox.shrink(),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.black87,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2), // Supaya tidak hilang otomatis
+        margin: const EdgeInsets.all(12),
+      );
+    }
+  }
+
+  Future<void> onLogin() async {
+    try {
+      var res = await _loginUseCase.execute(unCtrl.text, pwCtrl.text);
+      if (res) {
+        // await _syncUseCase.execute();
+        storage.saveUsername(unCtrl.text);
+        storage.saveIsLoggedIn(res);
       }
     } on ExceptionHandler catch (e) {
       Get.snackbar(
@@ -119,15 +171,6 @@ class LoginController extends GetxController {
     var box = StorageService();
     urlCtrl.text = box.bUrl ?? "";
     super.onInit();
-    // Delay sejenak supaya transition-nya smooth dan tidak konflik build
-    Future.delayed(const Duration(milliseconds: 100), () {
-      final isLoggedIn = box.isLoggedIn;
-      if (isLoggedIn) {
-        Get.offAllNamed('/home'); // Redirect langsung
-      } else {
-        Get.offAllNamed('/login');
-      }
-    });
   }
 
   @override

@@ -35,3 +35,12 @@ class ConstColor {
 class ConstPath {
   static const owlIcon = 'assets/image/owl.logo.png';
 }
+
+class DBConstant {
+  static const String tblUser = 'user';
+  static const String tblMasterHeader = 'masterheader';
+  static const String tblDDList = 'ddlistmenu';
+  static const String tblDashMenuIcon = 'dashboardmenuicon';
+  static const String tblKaryawan = 'karyawan';
+  static const String tblFPKaryawan = 'fp_karyawan';
+}

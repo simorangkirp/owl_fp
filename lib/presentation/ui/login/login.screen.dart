@@ -171,9 +171,12 @@ class LoginScreen extends GetView<LoginController> {
                             ? ConstColor.dPlatinum
                             : null,
                         fixedSize: Size(double.maxFinite, 42.h)),
-                    onPressed: () {
+                    onPressed: () async {
                       if (controller.enaBtn.value) {
-                        controller.onLogin();
+                        controller.loginDialog();
+                        await controller.onLogin().then((value) async {
+                          await controller.getProfileApi();
+                        });
                       }
                     },
                     child: Text(

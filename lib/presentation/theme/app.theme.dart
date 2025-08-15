@@ -72,7 +72,8 @@ class AppTheme {
       bodyMedium: GoogleFonts.poppins(),
       bodySmall: GoogleFonts.poppins(),
       labelLarge: GoogleFonts.poppins(),
-      labelMedium: GoogleFonts.poppins(),
+      labelMedium: GoogleFonts.poppins(
+          textStyle: const TextStyle(overflow: TextOverflow.ellipsis)),
       labelSmall: GoogleFonts.poppins(),
     ),
     appBarTheme: AppBarTheme(

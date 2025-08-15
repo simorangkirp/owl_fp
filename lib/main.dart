@@ -7,23 +7,20 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 
 import 'core/injection/dependency.injenction.dart';
-import 'core/navigation/navigation.dart';
-import 'core/navigation/routes.dart';
+import 'infrastructure/navigation/navigation.dart';
+import 'infrastructure/navigation/routes.dart';
 import 'presentation/theme/app.theme.dart';
 import 'presentation/theme/controller.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   var initialRoute = await Routes.initialRoute;
   log("Initialize Dependency Injection");
+  await GetStorage.init(); // Init Get Storage
+  log("Get Storage Initialized!");
   await DependecyInjection.init(); // Init Dependency Injection
   log("Dependency Injection Initialized!");
   log("Initialize Get Storage");
-  await GetStorage.init(); // Init Get Storage
-  log("Get Storage Initialized!");
-  // log("Initialize Shared Preference");
-  // await SharedPrefHelper.init(); // Init Shared Preference
-  // log("Shared Preference Initialized!");
-  WidgetsFlutterBinding.ensureInitialized();
   runApp(Main(initialRoute));
 }
 
@@ -47,6 +44,17 @@ class Main extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           initialRoute: initialRoute,
           getPages: Nav.routes,
+          unknownRoute: GetPage(
+            name: '/404',
+            page: () => Scaffold(
+              body: Center(
+                child: Text(
+                  "Halaman tidak ditemukan",
+                  style: TextStyle(fontSize: 20.sp),
+                ),
+              ),
+            ),
+          ),
         );
       },
     );

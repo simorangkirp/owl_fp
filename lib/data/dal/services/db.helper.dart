@@ -1,6 +1,9 @@
-import 'package:owl_fp/data/model/karyawan.model.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+
+import '../../../presentation/constant.dart';
+import '../../model/icon.menu.model.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -14,11 +17,6 @@ class DatabaseHelper {
     return db!;
   }
 
-  static const String _tblUser = 'user';
-  static const String _tblMasterHeader = 'masterheader';
-  static const String _tblDDList = 'ddlistmenu';
-  static const String _tblKaryawan = 'karyawan';
-
   Future<Database> initDB() async {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, 'user.db');
@@ -28,7 +26,7 @@ class DatabaseHelper {
       version: 1,
       onCreate: (db, version) async {
         await db.execute('''
-          CREATE TABLE $_tblDDList (
+          CREATE TABLE ${DBConstant.tblDDList}(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             no INTEGER,
             key TEXT,
@@ -39,14 +37,27 @@ class DatabaseHelper {
         ''');
 
         await db.execute('''
-          CREATE TABLE $_tblMasterHeader (
+          CREATE TABLE ${DBConstant.tblDashMenuIcon} (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          menuNm TEXT NOT NULL,
+          path TEXT NOT NULL,
+          iconIndex INTEGER,
+          iconCodePoint INTEGER,
+          iconFontFamily TEXT,
+          iconFontPackage TEXT,
+          iconMatchTextDirection INTEGER          
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE ${DBConstant.tblMasterHeader} (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT
           )
         ''');
 
         await db.execute('''
-          CREATE TABLE $_tblKaryawan (
+          CREATE TABLE ${DBConstant.tblKaryawan} (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             karyawanid TEXT,
             nik TEXT,
@@ -61,7 +72,19 @@ class DatabaseHelper {
         ''');
 
         await db.execute('''
-          CREATE TABLE $_tblUser (
+          CREATE TABLE ${DBConstant.tblFPKaryawan} (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sn TEXT,
+            sensor TEXT,
+            idF TEXT,
+            nik TEXT,
+            nama TEXT,
+            template TEXT      
+          )
+        ''');
+
+        await db.execute('''
+          CREATE TABLE ${DBConstant.tblUser} (
               id INTEGER PRIMARY KEY AUTOINCREMENT,
               name TEXT NOT NULL,
               sex TEXT,
@@ -101,11 +124,27 @@ class DatabaseHelper {
           {'name': 'Karyawan'},
         ];
 
-        //     no INTEGER,
-        //         key TEXT,
-        //         value TEXT,
-        //         menu TEXT,
-        //         submenu TEXT
+        var iconMenuList = [
+          DashboardIconMenuModel(
+            menuNm: 'Fingerprint',
+            path: '/fingerprint',
+            menuIcon: LucideIcons.fingerprint,
+            iconIndex: 0,
+          ),
+          DashboardIconMenuModel(
+            menuNm: 'Ombrometer',
+            path: '/ombro',
+            menuIcon: LucideIcons.milk,
+            iconIndex: 1,
+          ),
+          DashboardIconMenuModel(
+            menuNm: 'Template',
+            path: '/template',
+            menuIcon: LucideIcons.layoutList,
+            iconIndex: 2,
+          ),
+        ];
+
         var dropdownlist = [
           {
             'no': 0,
@@ -191,125 +230,74 @@ class DatabaseHelper {
             'menu': 'fingerprint',
             'submenu': 'admin'
           },
+          {
+            'no': 1,
+            'key': 'menit',
+            'value': 'Menit',
+            'menu': 'fingerprint',
+            'submenu': 'datetime'
+          },
+          {
+            'no': 2,
+            'key': 'jam',
+            'value': 'Jam',
+            'menu': 'fingerprint',
+            'submenu': 'datetime'
+          },
+          {
+            'no': 3,
+            'key': 'hari',
+            'value': 'Hari',
+            'menu': 'fingerprint',
+            'submenu': 'datetime'
+          },
+          {
+            'no': 4,
+            'key': 'bulan',
+            'value': 'Bulan',
+            'menu': 'fingerprint',
+            'submenu': 'datetime'
+          },
+          {
+            'no': 5,
+            'key': 'tahun',
+            'value': 'Tahun',
+            'menu': 'fingerprint',
+            'submenu': 'datetime'
+          },
+          {
+            'no': 1,
+            'key': 'paired',
+            'value': 'Paired',
+            'menu': 'fingerprint',
+            'submenu': 'btconnection'
+          },
+          {
+            'no': 2,
+            'key': 'notpaired',
+            'value': 'Not Paired',
+            'menu': 'fingerprint',
+            'submenu': 'btconnection'
+          },
+          {
+            'no': 3,
+            'key': 'owl',
+            'value': 'OWL',
+            'menu': 'fingerprint',
+            'submenu': 'btconnection'
+          },
         ];
+
+        for (var element in iconMenuList) {
+          db.insert(DBConstant.tblDashMenuIcon, element.toMap());
+        }
         for (var element in masterlist) {
-          db.insert(_tblMasterHeader, element);
+          db.insert(DBConstant.tblMasterHeader, element);
         }
         for (var element in dropdownlist) {
-          db.insert(_tblDDList, element);
+          db.insert(DBConstant.tblDDList, element);
         }
       },
     );
   }
-
-  // Delete Karyawan All
-  Future<int> deleteAllKaryawan() async {
-    final db = await database;
-    return await db.delete(_tblKaryawan);
-  }
-
-  // Sync Karyawan
-  Future<void> syncKaryawan(List<dynamic> data) async {
-    final db = await database;
-    db.transaction((txn) async {
-      for (final karyawan in data) {
-        txn.insert(_tblKaryawan, karyawan.toTable());
-      }
-    });
-  }
-
-  Future<List<String>> searchKaryawan(String query) async {
-    final db = await database;
-    final List<Map<String, dynamic>> results = await db.query(
-      'karyawan',
-      where: 'name LIKE ?',
-      whereArgs: ['%$query%'],
-    );
-    return results.map((e) => e['name'] as String).toList();
-  }
-
-  Future<List<KaryawanModel>?> searchKaryawanTuple(String query) async {
-    final db = await database;
-    final List<Map<String, dynamic>> results = await db.query(
-      _tblKaryawan,
-      where: '''
-    namakaryawan LIKE ? OR 
-    nik LIKE ? OR 
-    lokasitugas LIKE ?
-  ''',
-      whereArgs: [
-        '%$query%',
-        '%$query%',
-        '%$query%',
-      ],
-    );
-    var res = <KaryawanModel>[];
-    for (var element in results) {
-      res.add(KaryawanModel.fromJson(element));
-    }
-    return res;
-  }
-
-  //Insert User
-  Future<void> insertUser(Map<String, dynamic> args) async {
-    final db = await database;
-    db.transaction((txn) async {
-      txn.insert(_tblUser, args);
-    });
-  }
-
-  // Delete User
-  Future<int> deleteUser() async {
-    final db = await database;
-    return await db.delete(_tblUser);
-  }
-
-  // Get User
-  Future<Map<String, dynamic>?> getUser() async {
-    final db = await database;
-    final List<Map<String, dynamic>> results =
-        await db.rawQuery('SELECT * FROM $_tblUser');
-    if (results.isNotEmpty) {
-      return results.first;
-    } else {
-      return null;
-    }
-  }
-
-  // Get List Master Header
-  Future<List<String>> getMasterHeader() async {
-    final db = await database;
-    var data = <String>[];
-    final List<Map<String, dynamic>> results =
-        await db.rawQuery('SELECT * FROM $_tblMasterHeader');
-    if (results.isNotEmpty) {
-      for (var element in results) {
-        data.add(element['name']);
-      }
-      return data;
-    }
-    return data;
-  }
-
-  // Future<int> insertUser(User user) async {
-  //   final db = await database;
-  //   return await db.insert('users', user.toMap());
-  // }
-
-  // Future<List<User>> getUsers() async {
-  //   final db = await database;
-  //   final List<Map<String, dynamic>> result = await db.query('users');
-  //   return result.map((e) => User.fromMap(e)).toList();
-  // }
-
-  // Future<int> updateUser(User user) async {
-  //   final db = await database;
-  //   return await db
-  //       .update('users', user.toMap(), where: 'id = ?', whereArgs: [user.id]);
-  // }
-
-  // Future<int> deleteUser(int id) async {
-  //   final db = await database;
-  //   return await db.delete('users', where: 'id = ?', whereArgs: [id]);
-  // }
 }

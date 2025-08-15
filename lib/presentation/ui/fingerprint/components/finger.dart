@@ -34,29 +34,35 @@ class FingerComponents extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: DropdownButtonFormField<String>(
-                  decoration: InputDecoration(
-                    contentPadding: ConstPadding.ddBtnPadding,
-                    border: const OutlineInputBorder(),
-                  ),
-                  value: controller2.opt1.first,
-                  items: controller2.opt1
-                      .map((option) => DropdownMenuItem(
-                            value: option,
-                            child: Text(option),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    controller2.selectedOpt1.value = value ?? "";
-                  },
-                  validator: (value) {
-                    if (value == null) {
-                      return 'Please select an option';
-                    }
-                    return null;
-                  },
-                ),
-              ),
+                  child: FutureBuilder(
+                future: controller2.getDropdownOptionList(),
+                builder: (context, snapshot) {
+                  return controller2.opt1.isEmpty
+                      ? const SizedBox()
+                      : DropdownButtonFormField<String>(
+                          decoration: InputDecoration(
+                            contentPadding: ConstPadding.ddBtnPadding,
+                            border: const OutlineInputBorder(),
+                          ),
+                          value: controller2.opt1.first,
+                          items: controller2.opt1
+                              .map((option) => DropdownMenuItem(
+                                    value: option,
+                                    child: Text(option),
+                                  ))
+                              .toList(),
+                          onChanged: (value) {
+                            controller2.selectedOpt1.value = value ?? "";
+                          },
+                          validator: (value) {
+                            if (value == null) {
+                              return 'Please select an option';
+                            }
+                            return null;
+                          },
+                        );
+                },
+              )),
               SizedBox(width: 24.w),
               Obx(
                 () => Expanded(
@@ -90,7 +96,10 @@ class FingerComponents extends StatelessWidget {
                                 false;
                         return Text(isConnected ? "Disconnect" : "Connect");
                       }),
-                      onPressed: () => controller.connectToDevice(device),
+                      onPressed: () {
+                        controller.connectDialog();
+                        controller.connectToDevice(device);
+                      },
                     ),
                   );
                 }).toList(),

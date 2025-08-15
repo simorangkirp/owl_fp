@@ -7,7 +7,7 @@ import '../../../../core/resources/data.state.dart';
 import '../../../dio/dio.exception.dart';
 import '../../../model/master.model.dart';
 import '../../services/apis/master.api.dart';
-import '../../services/db/master.db.dart';
+import '../../services/localstorage/master.db.dart';
 
 class MasterRepositoryImpl implements MasterDataRepository {
   final MasterLocalDataSource localDataSource;

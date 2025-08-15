@@ -1,10 +1,9 @@
-import 'dart:developer';
 import 'dart:io';
 import 'package:owl_fp/core/resources/data.state.dart';
 import '../../../../domain/repository/auth.repo.dart';
 import '../../../dio/dio.exception.dart';
 import '../../services/apis/login.api.dart';
-import '../../services/db/auth.db.dart';
+import '../../services/localstorage/auth.db.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
@@ -31,7 +30,7 @@ class AuthRepositoryImpl implements AuthRepository {
         case HttpStatus.ok:
           Map<String, dynamic> args = httpResp.data["result"]["empl"];
           await localDataSource.deleteUser();
-          await localDataSource.insertUser(args);
+          await  localDataSource.insertUser(args);
           return DataSuccess(httpResp.data);
         case HttpStatus.requestTimeout:
           return DataError(httpResp.data);

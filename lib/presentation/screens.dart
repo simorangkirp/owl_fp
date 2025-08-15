@@ -1,4 +1,4 @@
-export 'package:owl_fp/presentation/ui/masterdata/masterdata.screen.dart';
+export 'package:owl_fp/presentation/template/template.screen.dart';
 export 'package:owl_fp/presentation/ui/about/about.screen.dart';
 export 'package:owl_fp/presentation/ui/dashboard/dashboard.screen.dart';
 export 'package:owl_fp/presentation/ui/fingerprint/fingerprint.screen.dart';
@@ -6,7 +6,9 @@ export 'package:owl_fp/presentation/ui/help/help.screen.dart';
 export 'package:owl_fp/presentation/ui/home/home.screen.dart';
 export 'package:owl_fp/presentation/ui/language/language.screen.dart';
 export 'package:owl_fp/presentation/ui/login/login.screen.dart';
+export 'package:owl_fp/presentation/ui/masterdata/masterdata.screen.dart';
 export 'package:owl_fp/presentation/ui/profile/profile.screen.dart';
 export 'package:owl_fp/presentation/ui/sampletext/sampletext.screen.dart';
 export 'package:owl_fp/presentation/ui/setup/setup.screen.dart';
+export 'package:owl_fp/presentation/ui/splash/splash.screen.dart';
 export 'package:owl_fp/presentation/ui/theme/theme.screen.dart';

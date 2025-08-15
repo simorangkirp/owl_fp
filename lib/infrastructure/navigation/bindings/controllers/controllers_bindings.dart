@@ -1,1 +1,15 @@
-export 'package:owl_fp/data/bindings/masterdata.controller.binding.dart'; 
+export '..//bindings/about.controller.binding.dart';
+export '..//bindings/dashboard.controller.binding.dart';
+export '..//bindings/fingerprint.controller.binding.dart';
+export '..//bindings/help.controller.binding.dart';
+export '..//bindings/home.controller.binding.dart';
+export '..//bindings/language.controller.binding.dart';
+export '..//bindings/login.controller.binding.dart';
+export '..//bindings/profile.controller.binding.dart';
+export '..//bindings/sampletext.controller.binding.dart';
+export '..//bindings/setup.controller.binding.dart';
+export '..//bindings/theme.controller.binding.dart';
+export '..//bindings/masterdata.controller.binding.dart';
+export '..//bindings/splash.controller.binding.dart';
+export '..//bindings/splash.controller.binding.dart';
+export '..//bindings/template.controller.binding.dart';

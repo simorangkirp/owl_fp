@@ -7,7 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:owl_fp/core/navigation/routes.dart';
+import 'package:owl_fp/infrastructure/navigation/routes.dart';
 
 import 'package:owl_fp/main.dart';
 
