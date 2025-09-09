@@ -93,7 +93,7 @@ class Nav {
     ),
     GetPage(
       name: Routes.template,
-      page: () => const TemplateScreen(),
+      page: () => TemplateScreen(),
       binding: TemplateControllerBinding(),
     ),
   ];

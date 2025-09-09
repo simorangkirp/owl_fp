@@ -6,6 +6,6 @@ class DeleteTemplateUseCase {
   DeleteTemplateUseCase(this.repository);
 
   Future<int> execute(String arg) {
-    return repository.deleteTempAfterInsert(arg);
+    return repository.deleteTemp(arg);
   }
 }

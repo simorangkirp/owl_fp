@@ -7,6 +7,7 @@ import '../../data/dal/daos/dashboard/dashboard.repoimpl.dart';
 import '../../data/dal/daos/fingerprint/fp.repoimpl.dart';
 import '../../data/dal/daos/masterdata/master.repoimpl.dart';
 import '../../data/dal/daos/profile/profile.repoimpl.dart';
+import '../../data/dal/daos/template/template.repoimpl.dart';
 import '../../data/dal/services/apis/drop.opt.api.dart';
 import '../../data/dal/services/apis/login.api.dart';
 import '../../data/dal/services/apis/master.api.dart';
@@ -16,10 +17,12 @@ import '../../data/dal/services/localstorage/dashboard.db.dart';
 import '../../data/dal/services/localstorage/db/dashboard.dbservice.dart';
 import '../../data/dal/services/localstorage/db/dropopt.dbservice.dart';
 import '../../data/dal/services/localstorage/db/karyawan.dbservice.dart';
+import '../../data/dal/services/localstorage/db/template.dbservice.dart';
 import '../../data/dal/services/localstorage/db/user.dbservice.dart';
 import '../../data/dal/services/localstorage/drop.opt.db.dart';
 import '../../data/dal/services/localstorage/master.db.dart';
 import '../../data/dal/services/localstorage/profile.db.dart';
+import '../../data/dal/services/localstorage/template.db.dart';
 import '../../domain/usecase/dashboard/icon.menu.usecase.dart';
 import '../../domain/usecase/dashboard/master.list.usecase.dart';
 import '../../presentation/ui/dashboard/controllers/dashboard.controller.dart';
@@ -43,6 +46,12 @@ class DependecyInjection {
     Get.put(DioClient(storage.bUrl ?? ""));
     Get.put<BluetoothController>(BluetoothController());
     Get.put<DatabaseHelper>(DatabaseHelper());
+    Get.put<UserDBHelper>(UserDBHelper());
+    Get.put<DropOptDBHelper>(DropOptDBHelper());
+    Get.put<DashboardDBHelper>(DashboardDBHelper());
+    Get.put<UserDBHelper>(UserDBHelper());
+    Get.put<KaryawanDBHelper>(KaryawanDBHelper());
+    Get.put<TemplateDBHelper>(TemplateDBHelper());
     Get.put<ThemeController>(ThemeController());
 
     ///-----------
@@ -73,6 +82,11 @@ class DependecyInjection {
         databaseHelper: Get.find<KaryawanDBHelper>(),
       ),
     );
+    Get.put<TemplateLocalDataSourceImpl>(
+      TemplateLocalDataSourceImpl(
+        databaseHelper: Get.find<TemplateDBHelper>(),
+      ),
+    );
 
     ///-----------
     /// RemoteData
@@ -96,6 +110,9 @@ class DependecyInjection {
         Get.find<MasterLocalDataSourceImpl>()));
     Get.put(FingerprintRepoImpl(Get.find<DropOptRemoteDataSourceImpl>(),
         Get.find<DropOptLocalDataSourceImpl>()));
+    Get.put(TemplateRepoImpl(
+      Get.find<TemplateLocalDataSourceImpl>(),
+    ));
 
     ///-----------
     /// Usecase

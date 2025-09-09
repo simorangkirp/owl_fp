@@ -1,3 +1,4 @@
+import 'package:owl_fp/data/model/template.model.dart';
 import 'package:owl_fp/domain/entity/dropopt.entity.dart';
 
 import '../../../../domain/repository/fp.repo.dart';
@@ -41,7 +42,23 @@ class FingerprintRepoImpl implements FingerprintRepository {
   }
 
   @override
-  Future<int> deleteTempAfterInsert(String args) async {
-    return await localDataSource.deleteTempAfterInsert(args);
+  Future<int> deleteTemp(String args) async {
+    return await localDataSource.deleteTempLocal(args);
+  }
+
+  @override
+  Future<List<String>> getSnList() async {
+    return await localDataSource.getSn();
+  }
+
+  @override
+  Future<void> uploadTemplateServer(Map<String, dynamic> args) async {
+    final response = await remoteDataSource.sendTemplateServer(args);
+    // return response;
+  }
+
+  @override
+  Future<List<TemplateModel>> getTemplateData(String args) async {
+    return await localDataSource.getTemplateData(args);
   }
 }

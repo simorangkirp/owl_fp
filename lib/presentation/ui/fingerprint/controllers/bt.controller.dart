@@ -254,7 +254,7 @@ class BluetoothController extends GetxController {
     }
   }
 
-  void cekbouncer() {
+  Future<void> cekbouncer() async {
     if (_debounceTimer?.isActive ?? false) {
       log("Timer masih jalan");
       isDone.value = false;
@@ -301,6 +301,50 @@ class BluetoothController extends GetxController {
       // Buat buffer baru, hapus bagian yang udah diproses
       final remaining = current.substring(endIndex + 1).trimLeft();
       buffer = StringBuffer(remaining);
+    }
+  }
+
+  Future<void> addAdmin(String args) async {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Get.dialog(
+        Scaffold(
+          resizeToAvoidBottomInset: false,
+          body: Dialog(
+            insetPadding:
+                EdgeInsets.symmetric(horizontal: 0.1.sw, vertical: 0.2.sh),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 24.h),
+                  Text("Mengirimkan perintah!.")
+                ],
+              ),
+            ),
+          ),
+        ),
+        barrierDismissible: false,
+      );
+    });
+    String data = "v\n$args\n?\n$authText";
+    try {
+      if (connection != null && connection!.isConnected) {
+        connection!.output.add(Uint8List.fromList(data.codeUnits));
+        await connection!.output.allSent;
+
+        await Future.delayed(const Duration(seconds: 3)).then((value) {
+          // ❗️Dialog hanya ditutup setelah pengiriman sukses (jika kamu mau)
+          Get.back();
+          if (listReply.isNotEmpty) {
+            displayReply();
+          }
+        });
+      }
+    } catch (e) {
+      Get.snackbar("Error", e.toString());
+      if (Get.isDialogOpen == true) Get.back(); // ❗️Tutup jika error
     }
   }
 

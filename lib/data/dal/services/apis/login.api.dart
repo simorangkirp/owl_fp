@@ -30,6 +30,7 @@ class AuthRemoteDataSourceImpl extends AuthRemoteDataSource {
       return false;
     } else {
       box.saveToken(response.data['result']['api_key']);
+      box.saveKebun(response.data['result']['kodeorg']);
       return true;
     }
   }

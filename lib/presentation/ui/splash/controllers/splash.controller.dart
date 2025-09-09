@@ -9,8 +9,8 @@ class SplashController extends GetxController {
   Future<void> validate() async {
 // Delay biar animasi splash keliatan
     if (box.isLoggedIn) {
-      Get.offAllNamed('/home');
-      // Get.offAllNamed('/login');
+      // Get.offAllNamed('/home');
+      Get.offAllNamed('/login');
     } else {
       Get.offAllNamed('/login');
     }

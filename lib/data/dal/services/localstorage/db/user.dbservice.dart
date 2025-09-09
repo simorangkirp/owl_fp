@@ -34,7 +34,7 @@ class UserDBHelper {
   Future<Map<String, dynamic>?> getUser() async {
     final db = await database;
     final List<Map<String, dynamic>> results =
-        await db.rawQuery('SELECT * FROM $DBConstant.tblUser');
+        await db.rawQuery('SELECT * FROM ${DBConstant.tblUser}');
     if (results.isNotEmpty) {
       return results.first;
     } else {

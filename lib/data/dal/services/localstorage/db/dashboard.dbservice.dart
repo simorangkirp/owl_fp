@@ -27,7 +27,7 @@ class DashboardDBHelper {
     final db = await database;
     var data = <String>[];
     final List<Map<String, dynamic>> results =
-        await db.rawQuery('SELECT * FROM $DBConstant.tblMasterHeader');
+        await db.rawQuery('SELECT * FROM ${DBConstant.tblMasterHeader}');
     if (results.isNotEmpty) {
       for (var element in results) {
         data.add(element['name']);

@@ -1,3 +1,4 @@
+import '../../data/model/template.model.dart';
 import '../entity/dropopt.entity.dart';
 
 abstract class FingerprintRepository {
@@ -6,5 +7,8 @@ abstract class FingerprintRepository {
   Future<List<String>> getBtstatOpt(String arg);
   Future<List<String>> getDtOpt(String arg);
   Future<void> insertTemplate(List<Map<String, dynamic>> args);
-  Future<int> deleteTempAfterInsert(String args);
+  Future<int> deleteTemp(String args);
+  Future<List<String>> getSnList();
+  Future<void> uploadTemplateServer(Map<String, dynamic> args);
+  Future<List<TemplateModel>> getTemplateData(String args);
 }

@@ -1,4 +1,4 @@
-export 'package:owl_fp/presentation/template/template.screen.dart';
+export 'package:owl_fp/presentation/ui/template/template.screen.dart';
 export 'package:owl_fp/presentation/ui/about/about.screen.dart';
 export 'package:owl_fp/presentation/ui/dashboard/dashboard.screen.dart';
 export 'package:owl_fp/presentation/ui/fingerprint/fingerprint.screen.dart';

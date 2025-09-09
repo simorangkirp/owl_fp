@@ -1,3 +1,4 @@
+import 'package:owl_fp/data/model/template.model.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -48,6 +49,14 @@ class DropOptDBHelper {
     return results.map((e) => e['value'] as String).toList();
   }
 
+  Future<List<String>> querySN() async {
+    final db = await database;
+    final List<Map<String, dynamic>> results = await db.query(
+      DBConstant.tblFPKaryawan,
+    );
+    return results.map((e) => e['sn'] as String).toSet().toList();
+  }
+
   Future<List<DropOptionModel>> getListModelOptQuery(String arg) async {
     final db = await database;
     final List<Map<String, dynamic>> results = await db.query(
@@ -60,6 +69,23 @@ class DropOptDBHelper {
       ret.add(DropOptionModel.fromJson(element));
     }
     return ret;
+  }
+
+  Future<List<TemplateModel>> queryTemplFP(String query) async {
+    final db = await database;
+    final List<Map<String, dynamic>> results = await db.query(
+      DBConstant.tblFPKaryawan,
+      where: '''
+      sn LIKE ?
+      ''',
+      whereArgs: ['%$query%'],
+    );
+    var ret = <TemplateModel>[];
+    for (var element in results) {
+      ret.add(TemplateModel.fromJson(element));
+    }
+    return ret;
+    // return results.map((e) => e['template'] as String).toList();
   }
 
   ///

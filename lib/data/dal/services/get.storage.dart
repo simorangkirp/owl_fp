@@ -9,6 +9,7 @@ class StorageService {
   static const String usernameKey = 'username';
   static const String tokenKey = 'token';
   static const String bUrlKey = 'baseurl';
+  static const String kebunKey = 'kebun';
 
   //? Fingerprint
   static const String condevSNKey = 'fpsn';
@@ -30,6 +31,7 @@ class StorageService {
   Future<void> saveUsername(String username) async =>
       _box.write(usernameKey, username);
   Future<void> saveToken(String token) async => _box.write(tokenKey, token);
+  Future<void> saveKebun(String token) async => _box.write(kebunKey, token);
   Future<void> saveBUrl(String bUrl) async => _box.write(bUrlKey, bUrl);
   Future<void> saveFPInfo(Map<String, dynamic> value) async {
     _box.write(condevSNKey, value['sn']);
@@ -49,6 +51,7 @@ class StorageService {
   String? get username => _box.read(usernameKey);
   String? get token => _box.read(tokenKey);
   String? get bUrl => _box.read(bUrlKey);
+  String? get kebun => _box.read(kebunKey);
   String? get condevSN => _box.read(condevSNKey);
   String? get condevName => _box.read(condevNameKey);
   String? get condevSensor => _box.read(condevSensorKey);

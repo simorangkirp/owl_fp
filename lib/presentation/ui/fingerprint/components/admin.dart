@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:get/get.dart';
 
 import '../../../constant.dart';
@@ -13,6 +14,7 @@ class AdminComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context).textTheme;
     var strCtrl = TextEditingController();
     opendialog() {
       return Get.dialog(
@@ -40,9 +42,8 @@ class AdminComponent extends StatelessWidget {
                     fixedSize: Size(double.maxFinite, 42.h),
                   ),
                   onPressed: () {
-                    controller.authDialogCtrl.clear();
                     Get.back();
-                    controller.insertTemplateLocal(controller.authDialogArg);
+                    controller.tambahAdmin();
                     // btctrl.devSend(controller.authDialogArg);
                   },
                   child: const Text('Kirim'),
@@ -58,13 +59,35 @@ class AdminComponent extends StatelessWidget {
       padding: ConstPadding.screenPadding,
       child: ListView(
         children: [
-          Text("Admin"),
+          Text("Tambah Admin"),
           Divider(),
           SizedBox(height: 12.h),
-          Text("Pilih Menu"),
-          SizedBox(height: 8.h),
-          TextField(
-            controller: strCtrl,
+          // Text("Pilih Menu"),
+          // SizedBox(height: 8.h),
+          TypeAheadFormField(
+            textFieldConfiguration: TextFieldConfiguration(
+              controller: controller.typeAheadController,
+              decoration: InputDecoration(
+                labelStyle: theme.labelLarge,
+                labelText: 'Cari karyawan',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            suggestionsCallback: (pattern) {
+              return controller.karyawanlist.where((item) {
+                var name = item.namakaryawan ?? "Undefined";
+                return name.toLowerCase().contains(pattern.toLowerCase());
+              });
+            },
+            itemBuilder: (context, suggestion) {
+              return ListTile(title: Text(suggestion.namakaryawan ?? ""));
+            },
+            onSuggestionSelected: (suggestion) {
+              btctrl.selectedRegisterNm = suggestion.namakaryawan ?? "";
+              btctrl.selectedRegisterNIK = suggestion.nik ?? "";
+              controller.typeAheadController.text =
+                  suggestion.namakaryawan ?? "";
+            },
           ),
           SizedBox(height: 12.h),
           ElevatedButton(
