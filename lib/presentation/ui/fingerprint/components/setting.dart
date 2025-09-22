@@ -42,8 +42,8 @@ class SettingComponents extends StatelessWidget {
                   onPressed: () {
                     controller.authDialogCtrl.clear();
                     Get.back();
-                    // btctrl.send(controller.authDialogArg,
-                    //     controller.selectedSettingId.value);
+                    btctrl.send(controller.authDialogArg,
+                        controller.selectedSettingId.value);
                   },
                   child: const Text('Kirim'),
                 ),

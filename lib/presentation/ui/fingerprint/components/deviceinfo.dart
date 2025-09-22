@@ -315,49 +315,49 @@ class DeviceInfoComponent extends StatelessWidget {
               ],
             ),
           ),
-          // Expanded(
-          //   child: Column(
-          //     crossAxisAlignment: CrossAxisAlignment.end,
-          //     children: [
-          //       Text(
-          //         btctrl.deviceInfo?['sn'] ?? "-",
-          //         style: theme.textTheme.labelLarge!
-          //             .copyWith(fontWeight: FontWeight.w400),
-          //       ),
-          //       SizedBox(height: 4.h),
-          //       Text(
-          //         btctrl.deviceInfo?['name'] ?? "-",
-          //         style: theme.textTheme.labelLarge!
-          //             .copyWith(fontWeight: FontWeight.w400),
-          //       ),
-          //       SizedBox(height: 4.h),
-          //       Text(
-          //         btctrl.deviceInfo?['firmware'] ?? "-",
-          //         style: theme.textTheme.labelLarge!
-          //             .copyWith(fontWeight: FontWeight.w400),
-          //       ),
-          //       SizedBox(height: 4.h),
-          //       Text(
-          //         btctrl.deviceInfo?['mac'] ?? "-",
-          //         style: theme.textTheme.labelLarge!
-          //             .copyWith(fontWeight: FontWeight.w400),
-          //       ),
-          //       SizedBox(height: 4.h),
-          //       Text(
-          //         btctrl.deviceInfo?['hardware'] ?? "-",
-          //         style: theme.textTheme.labelLarge!
-          //             .copyWith(fontWeight: FontWeight.w400),
-          //       ),
-          //       SizedBox(height: 4.h),
-          //       Text(
-          //         btctrl.deviceInfo?['firmware'] ?? "-",
-          //         style: theme.textTheme.labelLarge!
-          //             .copyWith(fontWeight: FontWeight.w400),
-          //       ),
-          //       SizedBox(height: 4.h),
-          //     ],
-          //   ),
-          // ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  btctrl.deviceInfo?['sn'] ?? "-",
+                  style: theme.textTheme.labelLarge!
+                      .copyWith(fontWeight: FontWeight.w400),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  btctrl.deviceInfo?['name'] ?? "-",
+                  style: theme.textTheme.labelLarge!
+                      .copyWith(fontWeight: FontWeight.w400),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  btctrl.deviceInfo?['firmware'] ?? "-",
+                  style: theme.textTheme.labelLarge!
+                      .copyWith(fontWeight: FontWeight.w400),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  btctrl.deviceInfo?['mac'] ?? "-",
+                  style: theme.textTheme.labelLarge!
+                      .copyWith(fontWeight: FontWeight.w400),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  btctrl.deviceInfo?['hardware'] ?? "-",
+                  style: theme.textTheme.labelLarge!
+                      .copyWith(fontWeight: FontWeight.w400),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  btctrl.deviceInfo?['firmware'] ?? "-",
+                  style: theme.textTheme.labelLarge!
+                      .copyWith(fontWeight: FontWeight.w400),
+                ),
+                SizedBox(height: 4.h),
+              ],
+            ),
+          ),
         ],
       );
     }

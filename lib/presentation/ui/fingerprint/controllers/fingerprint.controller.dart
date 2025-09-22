@@ -221,7 +221,7 @@ class FingerprintController extends GetxController {
       log('Total Data: ${data.length}');
       for (var el in data) {
         log("Send Template with NIK : ${el.nik}");
-        // await btC.sendTemplByNik(el.nik ?? "", el.template ?? "");
+        await btC.sendTemplByNik(el.nik ?? "", el.template ?? "");
       }
       doneProcess.value = true;
     }
@@ -239,7 +239,7 @@ class FingerprintController extends GetxController {
 
   Future<void> insertTemplateLocal(String args) async {
     final btC = Get.find<BluetoothController>();
-    // await btC.getTemplateFromDevice(args);
+    await btC.getTemplateFromDevice(args);
 
     // await _waitUntilDone(btC);
     do {
@@ -301,14 +301,14 @@ class FingerprintController extends GetxController {
         access = '${access}0';
       }
     }
-    // await btC.addAdmin(access, arg);
+    await btC.addAdmin(access, arg);
     authDialogArg = "";
   }
 
   Future<void> gantiPIN() async {
     final btC = Get.find<BluetoothController>();
     authDialogCtrl.clear();
-    // await btC.gantiPIN(pinArg, authDialogArg);
+    await btC.gantiPIN(pinArg, authDialogArg);
     pinCtrl.clear();
     authDialogArg = "";
     pinArg = "";

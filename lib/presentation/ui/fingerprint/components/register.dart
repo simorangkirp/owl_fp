@@ -48,9 +48,9 @@ class RegisterComponent extends StatelessWidget {
                     onPressed: () async {
                       btctrl.authCtrl.clear();
                       Get.back();
-                      // index == 0
-                      //     ? await btctrl.sendRegist()
-                      //     : await btctrl.deleteByNik();
+                      index == 0
+                          ? await btctrl.sendRegist()
+                          : await btctrl.deleteByNik();
                     },
                     child: const Text('Kirim'),
                   ),

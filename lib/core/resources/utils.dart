@@ -185,3 +185,27 @@ String extractErrorMessage(Object? error) {
   // 5) Default fallback
   return error.toString();
 }
+
+/// 🔹 Helper buat retry otomatis kalau DioError timeout (v4)
+Future<void> retryStep(Future<void> Function() step, String stepName) async {
+  int retry = 0;
+  const maxRetry = 2;
+
+  while (true) {
+    try {
+      await step();
+      break; // ✅ sukses
+    } on DioError catch (e) {
+      if ((e.type == DioErrorType.receiveTimeout ||
+              e.type == DioErrorType.connectTimeout ||
+              e.type == DioErrorType.sendTimeout) &&
+          retry < maxRetry) {
+        retry++;
+        debugPrint("⏳ $stepName timeout, coba ulang ($retry/$maxRetry)...");
+        await Future.delayed(const Duration(seconds: 1));
+        continue;
+      }
+      rethrow; // ❌ error lain -> lempar
+    }
+  }
+}

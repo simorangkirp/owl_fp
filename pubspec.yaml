@@ -13,7 +13,7 @@ dependencies:
   get: 4.6.5
   flutter:
     sdk: flutter
-  # flutter_bluetooth_serial: ^0.4.0
+  flutter_bluetooth_serial: ^0.4.0
   sqflite: ^2.2.8+4
   path: ^1.8.2
   google_fonts: ^4.0.4

@@ -87,8 +87,8 @@ class LoginController extends GetxController {
   }
 
   // ==============================
-// Login Flow
-// ==============================
+  // Login Flow
+  // ==============================
   Future<void> loginDialog() async {
     isLogin.value = false;
     isSync.value = false;
@@ -101,7 +101,7 @@ class LoginController extends GetxController {
         // "Sedang mencoba masuk ke aplikasi...",
         3,
       );
-      await _retryStep(onLogin, "Login");
+      await retryStep(onLogin, "Login");
 
       // 🔹 Step 2: Profile
       DialogHelper.showLoadingStep(
@@ -110,7 +110,7 @@ class LoginController extends GetxController {
         // "Mengambil data profil pengguna...",
         3,
       );
-      await _retryStep(getProfileApi, "Ambil Profile");
+      await retryStep(getProfileApi, "Ambil Profile");
 
       // 🔹 Step 3: Master Data
       DialogHelper.showLoadingStep(
@@ -119,7 +119,7 @@ class LoginController extends GetxController {
         // "Mengambil & menyimpan master data...",
         3,
       );
-      await _retryStep(onLoginGetMasterData, "Sinkronisasi Master Data");
+      await retryStep(onLoginGetMasterData, "Sinkronisasi Master Data");
 
       // 🔹 Tutup dialog jika sudah selesai
       if (Get.isDialogOpen == true) {
@@ -155,30 +155,6 @@ class LoginController extends GetxController {
         margin: const EdgeInsets.all(12),
         duration: const Duration(seconds: 3),
       );
-    }
-  }
-
-  /// 🔹 Helper buat retry otomatis kalau DioError timeout (v4)
-  Future<void> _retryStep(Future<void> Function() step, String stepName) async {
-    int retry = 0;
-    const maxRetry = 2;
-
-    while (true) {
-      try {
-        await step();
-        break; // ✅ sukses
-      } on DioError catch (e) {
-        if ((e.type == DioErrorType.receiveTimeout ||
-                e.type == DioErrorType.connectTimeout ||
-                e.type == DioErrorType.sendTimeout) &&
-            retry < maxRetry) {
-          retry++;
-          debugPrint("⏳ $stepName timeout, coba ulang ($retry/$maxRetry)...");
-          await Future.delayed(const Duration(seconds: 1));
-          continue;
-        }
-        rethrow; // ❌ error lain -> lempar
-      }
     }
   }
 
