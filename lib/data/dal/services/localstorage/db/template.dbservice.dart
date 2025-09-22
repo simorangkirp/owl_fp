@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -18,9 +20,14 @@ class TemplateDBHelper {
 
   Future<List<String>> querySN() async {
     final db = await database;
+    log("Masuk Sini GAYSS");
     final List<Map<String, dynamic>> results = await db.query(
       DBConstant.tblFPKaryawan,
     );
+    var mp = results.map((e) => e['sn'] as String).toSet().toList();
+    for (var element in mp) {
+      log(element);
+     }
     return results.map((e) => e['sn'] as String).toSet().toList();
   }
 

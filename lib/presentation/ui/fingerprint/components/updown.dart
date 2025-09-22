@@ -19,10 +19,13 @@ class UpdownComponent extends StatelessWidget {
     final theme = Theme.of(context).textTheme;
 
     opendialog(int index) {
-      return Get.dialog(
-        Dialog(
-          insetPadding:
-              EdgeInsets.symmetric(horizontal: 0.1.sw, vertical: 0.2.sh),
+      return Get.bottomSheet(
+        Container(
+          margin: EdgeInsets.symmetric(vertical: 0.1.sh, horizontal: 0.1.sw),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: Theme.of(context).scaffoldBackgroundColor,
+          ),
           child: Padding(
             padding: const EdgeInsets.all(20.0),
             child: Column(
@@ -47,8 +50,6 @@ class UpdownComponent extends StatelessWidget {
                     ctrl.authDialogCtrl.clear();
                     Get.back();
                     ctrl.uploadDownloadOptSend(index);
-                    // ctrl.insertTemplateLocal(ctrl.authDialogArg);
-                    // btctrl.devSend(controller.authDialogArg);
                   },
                   child: const Text('Kirim'),
                 ),
@@ -56,6 +57,7 @@ class UpdownComponent extends StatelessWidget {
             ),
           ),
         ),
+        isScrollControlled: true, // 👈 biar naik waktu keyboard muncul
       );
     }
 

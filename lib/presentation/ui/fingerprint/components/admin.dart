@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:get/get.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../constant.dart';
 import '../controllers/bt.controller.dart';
@@ -15,8 +16,8 @@ class AdminComponent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).textTheme;
-    var strCtrl = TextEditingController();
-    opendialog() {
+    var optCtrl = ScrollController();
+    opendialog(int index) {
       return Get.dialog(
         Dialog(
           insetPadding:
@@ -43,7 +44,9 @@ class AdminComponent extends StatelessWidget {
                   ),
                   onPressed: () {
                     Get.back();
-                    controller.tambahAdmin();
+                    index == 1
+                        ? controller.tambahAdmin(controller.authDialogArg)
+                        : controller.gantiPIN();
                     // btctrl.devSend(controller.authDialogArg);
                   },
                   child: const Text('Kirim'),
@@ -59,8 +62,8 @@ class AdminComponent extends StatelessWidget {
       padding: ConstPadding.screenPadding,
       child: ListView(
         children: [
-          Text("Tambah Admin"),
-          Divider(),
+          const Text("Tambah Admin"),
+          const Divider(),
           SizedBox(height: 12.h),
           // Text("Pilih Menu"),
           // SizedBox(height: 8.h),
@@ -70,7 +73,7 @@ class AdminComponent extends StatelessWidget {
               decoration: InputDecoration(
                 labelStyle: theme.labelLarge,
                 labelText: 'Cari karyawan',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
               ),
             ),
             suggestionsCallback: (pattern) {
@@ -84,18 +87,76 @@ class AdminComponent extends StatelessWidget {
             },
             onSuggestionSelected: (suggestion) {
               btctrl.selectedRegisterNm = suggestion.namakaryawan ?? "";
-              btctrl.selectedRegisterNIK = suggestion.nik ?? "";
+              btctrl.selectedRegisterNIK = suggestion.karyawanid ?? "";
               controller.typeAheadController.text =
                   suggestion.namakaryawan ?? "";
             },
           ),
           SizedBox(height: 12.h),
+          const Text("Tambah Hak Akses"),
+          const Divider(),
+          ListView.builder(
+            controller: optCtrl,
+            shrinkWrap: true,
+            itemCount: controller.listAdminOpt.length,
+            itemBuilder: (context, index) {
+              var data = controller.listAdminOpt[index];
+              return Row(
+                children: [
+                  Text(data.value ?? "Undifined"),
+                  Obx(
+                    () => Checkbox(
+                      value: data.selected.value, // selalu pakai .value
+                      onChanged: (val) {
+                        data.selected.value = val ?? false;
+                      },
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+          SizedBox(height: 12.h),
           ElevatedButton(
             onPressed: () {
-              opendialog();
+              opendialog(1);
             },
-            child: Text('Kirim'),
+            child: const Text('Kirim'),
           ),
+          SizedBox(height: 12.h),
+          const Text("Ganti PIN"),
+          const Divider(),
+          Row(
+            children: [
+              Expanded(
+                child: TextFormField(
+                  onChanged: (value) {
+                    controller.pinArg = value;
+                  },
+                  controller: controller.pinCtrl,
+                  // controller: controller.urlCtrl,
+                  decoration: const InputDecoration(
+                      hintText: '******',
+                      hintStyle: TextStyle(
+                        fontStyle: FontStyle.italic,
+                      )),
+                ),
+              ),
+              IconButton(
+                onPressed: () {
+                  controller.pinCtrl.clear();
+                  // controller.saveUrl();
+                  opendialog(2);
+                },
+                icon: Icon(
+                  LucideIcons.save,
+                  color: ConstColor.gBlueGray,
+                  size: 20.h,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 0.1.sh),
         ],
       ),
     );

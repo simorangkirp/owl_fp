@@ -43,4 +43,11 @@ class DBConstant {
   static const String tblDashMenuIcon = 'dashboardmenuicon';
   static const String tblKaryawan = 'karyawan';
   static const String tblFPKaryawan = 'fp_karyawan';
+  static const String tblUserAccess = 'user_access';
+  static const String tblMasterAccess = 'mst_access';
+  static const String tblLogMstSync = 'log_mstsync';
+}
+
+class LogConstant {
+  static const String mstKaryawan = 'Mst Karyawan';
 }

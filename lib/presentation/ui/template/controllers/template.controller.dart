@@ -32,9 +32,9 @@ class TemplateController extends GetxController {
   //* Function Lists *//
   Future<void> getSN() async {
     listSN.value = await _getSNUsecase.execute();
-    listSN.forEach((element) {
+    for (var element in listSN) {
       log(element);
-    });
+    }
   }
 
   Future<void> getTemplate() async {

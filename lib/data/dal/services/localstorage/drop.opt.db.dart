@@ -1,6 +1,7 @@
 import 'package:owl_fp/data/model/template.model.dart';
 
 import '../../../model/drop.opt.model.dart';
+import '../../../model/mst.admin.model.dart';
 import 'db/dropopt.dbservice.dart';
 
 abstract class DropOptLocalDataSource {
@@ -9,9 +10,11 @@ abstract class DropOptLocalDataSource {
   Future<List<String>> getBtstsOpt(String arg);
   Future<List<String>> getDtimeOpt(String arg);
   Future<void> insertTemplateAll(List<Map<String, dynamic>> arg);
+  Future<void> insertTemplateOnce(Map<String, dynamic> arg);
   Future<int> deleteTempLocal(String arg);
   Future<List<String>> getSn();
   Future<List<TemplateModel>> getTemplateData(String arg);
+  Future<List<MstAdminModel>> getMstAdminDb();
 }
 
 class DropOptLocalDataSourceImpl extends DropOptLocalDataSource {
@@ -58,5 +61,22 @@ class DropOptLocalDataSourceImpl extends DropOptLocalDataSource {
   @override
   Future<List<TemplateModel>> getTemplateData(String arg) async {
     return await databaseHelper.queryTemplFP(arg);
+  }
+
+  @override
+  Future<void> insertTemplateOnce(Map<String, dynamic> arg) async {
+    //! Cek Dulu Datanya
+    var cond = await databaseHelper.checkTemplateExist(arg);
+    if (!cond) {
+      //! Insert Data kalo ga ada
+      await databaseHelper.insertTempAll(arg);
+    } else {
+      return;
+    }
+  }
+
+  @override
+  Future<List<MstAdminModel>> getMstAdminDb() async {
+    return await databaseHelper.mstAdminModel();
   }
 }

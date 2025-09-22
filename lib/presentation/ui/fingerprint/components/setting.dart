@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:owl_fp/presentation/ui/common/container.ext.dart';
 import 'package:owl_fp/presentation/ui/fingerprint/controllers/bt.controller.dart';
 
 import '../../../constant.dart';
@@ -41,8 +42,8 @@ class SettingComponents extends StatelessWidget {
                   onPressed: () {
                     controller.authDialogCtrl.clear();
                     Get.back();
-                    btctrl.send(controller.authDialogArg,
-                        controller.selectedSettingId.value);
+                    // btctrl.send(controller.authDialogArg,
+                    //     controller.selectedSettingId.value);
                   },
                   child: const Text('Kirim'),
                 ),
@@ -103,8 +104,13 @@ class SettingComponents extends StatelessWidget {
             },
             child: Obx(
               () => Container(
-                padding: EdgeInsets.all(12.w),
-                child: Text(controller.selectedtod.value),
+                width: double.maxFinite,
+                padding: context.outlinedButtonPadding,
+                decoration: context.outlinedButtonBox,
+                child: Text(
+                  controller.selectedtod.value,
+                  style: TextStyle(fontSize: 14.sp),
+                ),
               ),
             ),
           ),
@@ -124,9 +130,19 @@ class SettingComponents extends StatelessWidget {
             },
             child: Obx(
               () => Container(
-                padding: EdgeInsets.all(12.w),
-                child: Text(controller.selectedDt.value),
+                width: double.maxFinite,
+                padding: context.outlinedButtonPadding,
+                decoration: context.outlinedButtonBox,
+                child: Text(
+                  controller.selectedDt.value,
+                  style: TextStyle(fontSize: 14.sp),
+                ),
               ),
+              // Container(
+              //   decoration: BoxDecoration(),
+              //   padding: EdgeInsets.all(12.w),
+              //   child: Text(controller.selectedDt.value),
+              // ),
             ),
           ),
           SizedBox(height: 12.h),

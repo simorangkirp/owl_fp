@@ -1,3 +1,5 @@
+import '../../core/resources/data.state.dart';
+import '../../data/model/mst.admin.model.dart';
 import '../../data/model/template.model.dart';
 import '../entity/dropopt.entity.dart';
 
@@ -9,6 +11,9 @@ abstract class FingerprintRepository {
   Future<void> insertTemplate(List<Map<String, dynamic>> args);
   Future<int> deleteTemp(String args);
   Future<List<String>> getSnList();
-  Future<void> uploadTemplateServer(Map<String, dynamic> args);
+  Future<DataState> uploadTemplateServer(Map<String, dynamic> args);
   Future<List<TemplateModel>> getTemplateData(String args);
+  // Future<void> sendTemptoDevice(Map<String, dynamic> args);
+
+  Future<List<MstAdminModel>> getMstAdmin();
 }

@@ -1,7 +1,12 @@
+import 'dart:io';
+
+import 'package:owl_fp/core/resources/data.state.dart';
+import 'package:owl_fp/data/model/mst.admin.model.dart';
 import 'package:owl_fp/data/model/template.model.dart';
 import 'package:owl_fp/domain/entity/dropopt.entity.dart';
 
 import '../../../../domain/repository/fp.repo.dart';
+import '../../../dio/dio.exception.dart';
 import '../../services/apis/drop.opt.api.dart';
 import '../../services/localstorage/drop.opt.db.dart';
 
@@ -52,13 +57,35 @@ class FingerprintRepoImpl implements FingerprintRepository {
   }
 
   @override
-  Future<void> uploadTemplateServer(Map<String, dynamic> args) async {
-    final response = await remoteDataSource.sendTemplateServer(args);
+  Future<DataState> uploadTemplateServer(Map<String, dynamic> args) async {
     // return response;
+    try {
+      final httpResp = await remoteDataSource.sendTemplateServer(args);
+      switch (httpResp.response.statusCode) {
+        case HttpStatus.ok:
+          return DataSuccess(httpResp.data);
+        case HttpStatus.requestTimeout:
+          return DataError(httpResp.data);
+        default:
+      }
+      return DataError(httpResp.data);
+    } on DioException catch (e) {
+      return DataError(e);
+    }
   }
 
   @override
   Future<List<TemplateModel>> getTemplateData(String args) async {
     return await localDataSource.getTemplateData(args);
   }
+
+  @override
+  Future<List<MstAdminModel>> getMstAdmin() async {
+    return await localDataSource.getMstAdminDb();
+  }
+
+  // @override
+  // Future<void> sendTemptoDevice(Map<String, dynamic> args) async {
+  //   return await localDataSource.insertTemplateOnce(args);
+  // }
 }

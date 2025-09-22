@@ -17,7 +17,7 @@ class SplashController extends GetxController {
   }
 
   @override
-  void onInit() {
+  Future<void> onInit() async {
     super.onInit();
   }
 }

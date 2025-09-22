@@ -28,5 +28,7 @@ class HomeControllerBinding extends Bindings {
         Get.find<SyncMasterDataUseCase>(),
       ),
     );
+    // ✅ Tambahin ini biar BottomNavController selalu fresh tiap masuk /home
+    // Get.create<BottomNavController>(() => BottomNavController());
   }
 }

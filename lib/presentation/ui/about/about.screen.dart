@@ -24,9 +24,9 @@ class AboutScreen extends GetView<AboutController> {
               height: 72.h,
             ),
             SizedBox(height: 32.h),
-            Text("OWL Plantation System"),
-            Text("Versi 1.0.0"),
-            Text("Build 2"),
+            const Text("OWL Plantation System"),
+            const Text("Versi 1.0.0"),
+            const Text("Build 2"),
             SizedBox(height: 32.h),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -35,8 +35,8 @@ class AboutScreen extends GetView<AboutController> {
               onPressed: () {},
               child: const Text('Cek Versi Terbaru'),
             ),
-            Spacer(),
-            Text(
+            const Spacer(),
+            const Text(
               "Copyright 2025 OWL Plantation System\nAll rights reserved",
               textAlign: TextAlign.center,
             ),

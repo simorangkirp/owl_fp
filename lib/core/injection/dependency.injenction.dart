@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 import 'package:owl_fp/data/dio/dio.client.dart';
+import 'package:owl_fp/presentation/ui/login/controllers/login.controller.dart';
 
 import '../../data/dal/daos/auth/auth.repoimpl.dart';
 import '../../data/dal/daos/dashboard/dashboard.repoimpl.dart';
@@ -23,6 +24,9 @@ import '../../data/dal/services/localstorage/drop.opt.db.dart';
 import '../../data/dal/services/localstorage/master.db.dart';
 import '../../data/dal/services/localstorage/profile.db.dart';
 import '../../data/dal/services/localstorage/template.db.dart';
+import '../../domain/usecase/auth/get.master.data.dart';
+import '../../domain/usecase/auth/login.usecase.dart';
+import '../../domain/usecase/auth/profile.usecase.dart';
 import '../../domain/usecase/dashboard/icon.menu.usecase.dart';
 import '../../domain/usecase/dashboard/master.list.usecase.dart';
 import '../../presentation/ui/dashboard/controllers/dashboard.controller.dart';
@@ -34,7 +38,7 @@ import '../../data/dal/services/get.storage.dart';
 
 class DependecyInjection {
   static Future<void> init() async {
-    Get.put(StorageService());
+    Get.put(StorageService.instance);
     final storage = Get.find<StorageService>();
 
     // Get.lazyPut(() => GetUserUseCase(Get.find<ProfileRepositoryImpl>()));
@@ -119,14 +123,20 @@ class DependecyInjection {
     /// ----------
     Get.put(GetMasterHeaderUseCase(Get.find<DashboardRepoImpl>()));
     Get.put(GetIconMenuDashboardUsecase(Get.find<DashboardRepoImpl>()));
+    Get.put(LoginUseCase(Get.find<AuthRepositoryImpl>()));
+    Get.put(ProfileUseCase(Get.find<AuthRepositoryImpl>()));
+    Get.put(OnLoginMasterData(Get.find<AuthRepositoryImpl>()));
 
     ///-----------
     /// Others
     /// ----------
+    Get.create<BottomNavController>(() => BottomNavController());
     Get.put<BottomNavController>(BottomNavController());
     Get.put<DashboardController>(DashboardController(
       Get.find<GetMasterHeaderUseCase>(),
       Get.find<GetIconMenuDashboardUsecase>(),
     ));
+    Get.put(LoginController(Get.find<LoginUseCase>(),
+        Get.find<ProfileUseCase>(), Get.find<OnLoginMasterData>()));
   }
 }

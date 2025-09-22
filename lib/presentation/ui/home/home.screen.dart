@@ -9,7 +9,7 @@ import '../../theme/btm.navbar.ctrl.dart';
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({Key? key}) : super(key: key);
-  final controller = Get.put(BottomNavController());
+  final controller = Get.find<BottomNavController>();
 
   final pages = [
     DashboardScreen(), // halaman utama dashboard

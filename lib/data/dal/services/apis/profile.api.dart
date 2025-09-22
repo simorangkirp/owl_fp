@@ -12,7 +12,7 @@ class ProfileRemoteDataSourceImpl extends ProfileRemoteDataSource {
   final DioClient dioClient;
 
   ProfileRemoteDataSourceImpl({required this.dioClient});
-  var box = StorageService();
+  var box = StorageService.instance;
 
   @override
   Future<HttpResponse<dynamic>> profile() async {

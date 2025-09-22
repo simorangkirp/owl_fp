@@ -39,22 +39,28 @@ class MasterdataScreen extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: 4.h),
-                      Text(
-                        'Sabtu, 12 Desember 2025 12:12:12',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 12.sp,
+                      Obx(
+                        () => Text(
+                          // 'Sabtu, 12 Desember 2025 12:12:12',
+                          controller.lastUpdate.value,
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w500,
+                            fontSize: 12.sp,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
                 Expanded(
-                  child: Text(
-                    "Sinkron",
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14.sp,
+                  child: InkWell(
+                    onTap: () => controller.onSyncKaryawan(),
+                    child: Text(
+                      "Sinkron",
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14.sp,
+                      ),
                     ),
                   ),
                 ),

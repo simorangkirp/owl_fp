@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart';
+import 'package:retrofit/retrofit.dart';
 
 import '../../../dio/dio.client.dart';
 import '../get.storage.dart';
 
 abstract class DropOptRemoteDataSource {
-  Future<bool> sendTemplateServer(
+  Future<HttpResponse<dynamic>> sendTemplateServer(
     Map<String, dynamic> payload,
   );
 }
@@ -13,11 +14,11 @@ class DropOptRemoteDataSourceImpl extends DropOptRemoteDataSource {
   final DioClient dioClient;
 
   DropOptRemoteDataSourceImpl({required this.dioClient});
-  var box = StorageService();
 
   @override
-  Future<bool> sendTemplateServer(Map<String, dynamic> payload) async {
-    final box = StorageService();
+  Future<HttpResponse<dynamic>> sendTemplateServer(
+      Map<String, dynamic> payload) async {
+    final box = StorageService.instance;
     final Response response =
         await dioClient.post('${box.bUrl}/module/fingerprint/datatemplate/send',
             data: payload,
@@ -27,11 +28,8 @@ class DropOptRemoteDataSourceImpl extends DropOptRemoteDataSource {
                 'Content-Type': 'application/json',
               },
             ));
-    if (response.data['error'] == true) {
-      return false;
-    } else {
-      // box.saveToken(response.data['result']['api_key']);
-      return true;
-    }
+    final value = response.data;
+    final httpResponse = HttpResponse(value, response);
+    return httpResponse;
   }
 }

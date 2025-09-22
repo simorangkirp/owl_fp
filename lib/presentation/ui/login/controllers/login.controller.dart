@@ -1,51 +1,58 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../core/error/exception.handler.dart';
+import '../../../../core/resources/utils.dart';
 import '../../../../data/dal/services/get.storage.dart';
+import '../../../../domain/usecase/auth/get.master.data.dart';
 import '../../../../domain/usecase/auth/login.usecase.dart';
 import '../../../../domain/usecase/auth/profile.usecase.dart';
-import '../../../../domain/usecase/masterdata/master.usecase.dart';
 
 class LoginController extends GetxController {
   final LoginUseCase _loginUseCase;
   final ProfileUseCase _profileUseCase;
-  final SyncMasterDataUseCase _syncUseCase;
-  LoginController(this._loginUseCase, this._profileUseCase, this._syncUseCase);
+  final OnLoginMasterData _onloginMasterUsecase;
+
+  LoginController(
+    this._loginUseCase,
+    this._profileUseCase,
+    this._onloginMasterUsecase,
+  );
+
   final storage = Get.find<StorageService>();
 
-  /// Text Controller
-  var urlCtrl = TextEditingController();
-  var unCtrl = TextEditingController();
-  var pwCtrl = TextEditingController();
+  // 🔹 Text Controllers
+  final urlCtrl = TextEditingController();
+  final unCtrl = TextEditingController();
+  final pwCtrl = TextEditingController();
 
-  /// String Variables
-  var selectedType = "".obs;
-  var selectedVer = "".obs;
+  // 🔹 Observable Variables
+  final selectedType = "".obs;
+  final selectedVer = "".obs;
+  final loginMessage = "".obs;
+  final currentStep = 0.obs;
+  final totalStep = 3;
 
-  /// List Variables
-  var listVer = <String>["v1", "v2"].obs;
-  var listType = <String>["http", "https"].obs;
+  final listVer = <String>["v1", "v2"].obs;
+  final listType = <String>["http", "https"].obs;
 
-  /// boolean Variables
-  var isShown = false.obs;
-  var enaBtn = false.obs;
-  var isObs = true.obs;
+  final isShown = false.obs;
+  final enaBtn = false.obs;
+  final isObs = true.obs;
 
-  /// Integers
+  final isLogin = false.obs;
+  final isSync = false.obs;
+
+  // 🔹 Private Vars
   int _tapCount = 0;
-
-  /// Timers
   Timer? _resetTimer;
 
-  // Bool Args
-  RxBool isLogin = false.obs;
-
+  // ==============================
+  // URL Section
+  // ==============================
   void displayUrl() {
     if (!isShown.value) {
       _resetTimer?.cancel();
@@ -62,10 +69,11 @@ class LoginController extends GetxController {
     }
   }
 
-  void saveUrl() async {
+  Future<void> saveUrl() async {
     await storage.saveBUrl(urlCtrl.text);
     log(storage.bUrl ?? "Tidak Tersimpan");
     isShown.value = false;
+
     Get.snackbar(
       '',
       'Berhasil Tersimpan.',
@@ -73,113 +81,186 @@ class LoginController extends GetxController {
       snackPosition: SnackPosition.BOTTOM,
       backgroundColor: Colors.black87,
       colorText: Colors.white,
-      duration: const Duration(seconds: 2), // Supaya tidak hilang otomatis
+      duration: const Duration(seconds: 2),
       margin: const EdgeInsets.all(12),
     );
-    Future.delayed(const Duration(seconds: 1));
   }
 
+  // ==============================
+// Login Flow
+// ==============================
   Future<void> loginDialog() async {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.dialog(
-        Dialog(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Login',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                const CircularProgressIndicator(),
-                SizedBox(height: 12.h),
-                Text('Sedang mencoba masuk kedalam aplikasi.')
-                // Text("Menemukan ${deviceFound.value.toString()} perangkat.")
-              ],
-            ),
-          ),
-        ),
-        barrierDismissible: true,
+    isLogin.value = false;
+    isSync.value = false;
+
+    try {
+      // 🔹 Step 1: Login
+      DialogHelper.showLoadingStep(
+        1,
+        "Login",
+        // "Sedang mencoba masuk ke aplikasi...",
+        3,
       );
-    });
-    // Pantau kondisi isRegistered dan tutup dialog jika true
-    ever(isLogin, (val) async {
-      if (val == true && Get.isDialogOpen == true) {
-        Get.back(); // menutup dialog
-        Get.snackbar(
-          '',
-          "Berhasil Login!",
-          titleText: const SizedBox.shrink(),
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.black87,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 2), // Supaya tidak hilang otomatis
-          margin: const EdgeInsets.all(12),
-        );
-        Get.toNamed('/home');
+      await _retryStep(onLogin, "Login");
+
+      // 🔹 Step 2: Profile
+      DialogHelper.showLoadingStep(
+        2,
+        "Ambil Profile",
+        // "Mengambil data profil pengguna...",
+        3,
+      );
+      await _retryStep(getProfileApi, "Ambil Profile");
+
+      // 🔹 Step 3: Master Data
+      DialogHelper.showLoadingStep(
+        3,
+        "Sinkronisasi Master Data",
+        // "Mengambil & menyimpan master data...",
+        3,
+      );
+      await _retryStep(onLoginGetMasterData, "Sinkronisasi Master Data");
+
+      // 🔹 Tutup dialog jika sudah selesai
+      if (Get.isDialogOpen == true) {
+        Get.back();
       }
-    });
+
+      // 🔹 Redirect ke home jika login berhasil
+      if (isLogin.value) {
+        Get.offAllNamed('/home');
+
+        if (loginMessage.isNotEmpty) {
+          Get.snackbar(
+            '',
+            loginMessage.value,
+            titleText: const SizedBox.shrink(),
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green.shade600,
+            colorText: Colors.white,
+            duration: const Duration(seconds: 2),
+            margin: const EdgeInsets.all(12),
+          );
+        }
+      }
+    } catch (e) {
+      if (Get.isDialogOpen == true) Get.back();
+
+      Get.snackbar(
+        "Login Gagal",
+        e.toString(),
+        backgroundColor: Colors.red.shade700,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+        duration: const Duration(seconds: 3),
+      );
+    }
   }
 
-  Future<void> getProfileApi() async {
-    try {
-      await _profileUseCase.execute();
-      isLogin.value = true;
-    } on ExceptionHandler catch (e) {
-      Get.snackbar(
-        '',
-        e.toString(),
-        titleText: const SizedBox.shrink(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.black87,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 2), // Supaya tidak hilang otomatis
-        margin: const EdgeInsets.all(12),
-      );
+  /// 🔹 Helper buat retry otomatis kalau DioError timeout (v4)
+  Future<void> _retryStep(Future<void> Function() step, String stepName) async {
+    int retry = 0;
+    const maxRetry = 2;
+
+    while (true) {
+      try {
+        await step();
+        break; // ✅ sukses
+      } on DioError catch (e) {
+        if ((e.type == DioErrorType.receiveTimeout ||
+                e.type == DioErrorType.connectTimeout ||
+                e.type == DioErrorType.sendTimeout) &&
+            retry < maxRetry) {
+          retry++;
+          debugPrint("⏳ $stepName timeout, coba ulang ($retry/$maxRetry)...");
+          await Future.delayed(const Duration(seconds: 1));
+          continue;
+        }
+        rethrow; // ❌ error lain -> lempar
+      }
     }
   }
 
   Future<void> onLogin() async {
-    try {
-      var res = await _loginUseCase.execute(unCtrl.text, pwCtrl.text);
-      if (res) {
-        // await _syncUseCase.execute();
-        storage.saveUsername(unCtrl.text);
-        storage.saveIsLoggedIn(res);
-      }
-    } on ExceptionHandler catch (e) {
-      Get.snackbar(
-        '',
-        e.toString(),
-        titleText: const SizedBox.shrink(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.black87,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 2), // Supaya tidak hilang otomatis
-        margin: const EdgeInsets.all(12),
-      );
-    }
+    isSync.value = true;
+
+    // final res = await _loginUseCase.execute(unCtrl.text, pwCtrl.text);
+    await _loginUseCase.execute(unCtrl.text, pwCtrl.text);
+
+    // DialogHelper.handleApiResult(
+    //   res,
+    //   successMessage: "Login berhasil, selamat datang!",
+    //   onSuccess: (data) {
+    //     if (data is Map<String, dynamic> && data['error'] != false) {
+    //       storage.saveUsername(unCtrl.text);
+    //       storage.savePwd(pwCtrl.text);
+    //       storage.saveIsLoggedIn(true);
+    //     }
+    //   },
+    // );
+
+    isSync.value = false;
   }
 
+  Future<void> onReLogin() async {
+    final res = await _loginUseCase.execute(
+      storage.username ?? "",
+      storage.pwd ?? "",
+    );
+
+    DialogHelper.handleApiResult(
+      res,
+      successMessage: "Login ulang berhasil!",
+    );
+
+    isSync.value = true;
+  }
+
+  Future<void> getProfileApi() async {
+    // final res = await _profileUseCase.execute();
+    await _profileUseCase.execute();
+
+    // DialogHelper.handleApiResult(
+    //   res,
+    //   successMessage: "Profile berhasil diambil",
+    //   onSuccess: (_) => isSync.value = true,
+    // );
+  }
+
+  Future<void> onLoginGetMasterData() async {
+    final res = await _onloginMasterUsecase.execute();
+
+    DialogHelper.handleApiResult(
+      res,
+      successMessage: "Login berhasil.",
+      onSuccess: (_) {
+        isLogin.value = true;
+
+        // close loading dialog & redirect setelah master data selesai
+        if (Get.isDialogOpen == true) {
+          Get.back();
+          Get.offAllNamed('/home');
+        }
+      },
+    );
+  }
+
+  // ==============================
+  // Lifecycle
+  // ==============================
   @override
   void onInit() {
-    var box = StorageService();
-    urlCtrl.text = box.bUrl ?? "";
+    urlCtrl.text = storage.bUrl ?? "";
     super.onInit();
   }
 
   @override
-  Future<void> onReady() async {
-    super.onReady();
-  }
-
-  @override
-  Future<void> onClose() async {
+  void onClose() {
+    urlCtrl.dispose();
+    unCtrl.dispose();
+    pwCtrl.dispose();
+    _resetTimer?.cancel();
     super.onClose();
   }
 }

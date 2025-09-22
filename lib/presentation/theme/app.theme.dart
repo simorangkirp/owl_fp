@@ -21,6 +21,7 @@ class AppTheme {
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
+        backgroundColor: ConstColor.gCultured,
         foregroundColor: ConstColor.lCrulean, // warna teks/icon
         side: BorderSide(color: ConstColor.lCrulean, width: 1.5.w),
         padding: ConstPadding.eleBtnPadding,

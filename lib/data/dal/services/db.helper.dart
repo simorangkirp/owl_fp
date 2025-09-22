@@ -1,4 +1,4 @@
-import 'package:lucide_icons/lucide_icons.dart';
+// import 'package:lucide_icons/lucide_icons.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 
@@ -72,6 +72,14 @@ class DatabaseHelper {
         ''');
 
         await db.execute('''
+          CREATE TABLE ${DBConstant.tblLogMstSync} (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+             name TEXT,
+             lastUpdate INTEGER     
+          )
+        ''');
+
+        await db.execute('''
           CREATE TABLE ${DBConstant.tblFPKaryawan} (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             sn TEXT,
@@ -120,6 +128,37 @@ class DatabaseHelper {
           );
         ''');
 
+        // await db.execute('''
+        //   CREATE TABLE ${DBConstant.tblUserAccess} (
+        //       id INTEGER PRIMARY KEY AUTOINCREMENT,
+        //       name TEXT NOT NULL,
+        //       nik TEXT,
+        //       prev0 INTEGER,
+        //       prev1 INTEGER,
+        //       prev2 INTEGER,
+        //       prev3 INTEGER,
+        //       prev4 INTEGER,
+        //       prev5 INTEGER,
+        //       prev6 INTEGER,
+        //       prev7 INTEGER,
+        //       prev8 INTEGER,
+        //       prev9 INTEGER,
+        //       prev10 INTEGER,
+        //       prev11 INTEGER,
+        //       prev12 INTEGER,
+        //       prev13 INTEGER,
+        //       prev14 INTEGER
+        //   );
+        // ''');
+
+        await db.execute('''
+          CREATE TABLE ${DBConstant.tblMasterAccess} (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              key TEXT,
+              value TEXT
+          );
+        ''');
+
         var masterlist = [
           {'name': 'Karyawan'},
         ];
@@ -128,21 +167,39 @@ class DatabaseHelper {
           DashboardIconMenuModel(
             menuNm: 'Fingerprint',
             path: '/fingerprint',
-            menuIcon: LucideIcons.fingerprint,
-            iconIndex: 0,
+            // menuIcon: LucideIcons.fingerprint,
+            iconIndex: 1,
           ),
           DashboardIconMenuModel(
             menuNm: 'Ombrometer',
             path: '/ombro',
-            menuIcon: LucideIcons.milk,
-            iconIndex: 1,
+            // menuIcon: LucideIcons.milk,
+            iconIndex: 2,
           ),
           DashboardIconMenuModel(
             menuNm: 'Template',
             path: '/template',
-            menuIcon: LucideIcons.layoutList,
-            iconIndex: 2,
+            // menuIcon: LucideIcons.layoutList,
+            iconIndex: 3,
           ),
+        ];
+
+        var adminDataList = [
+          {'key': 'prev0', 'value': 'Tambah akses privilege'},
+          {'key': 'prev1', 'value': 'Interval delete otomatis'},
+          {'key': 'prev2', 'value': 'Setting extention door'},
+          {'key': 'prev3', 'value': 'Setting default fingerprint'},
+          {'key': 'prev4', 'value': 'Delete log absen'},
+          {'key': 'prev5', 'value': 'Delete data karyawan by nik'},
+          {'key': 'prev6', 'value': 'Kirim template finger by nik'},
+          {'key': 'prev7', 'value': 'Kirim template'},
+          {'key': 'prev8', 'value': 'Simpan template'},
+          {'key': 'prev9', 'value': 'Setting jam'},
+          {'key': 'prev10', 'value': 'Setting interval upload'},
+          {'key': 'prev11', 'value': 'Register Finger'},
+          {'key': 'prev12', 'value': 'Factory reset'},
+          {'key': 'prev13', 'value': 'Setting wifi dan password'},
+          {'key': 'prev14', 'value': 'Setting alamat server'},
         ];
 
         var dropdownlist = [
@@ -296,6 +353,9 @@ class DatabaseHelper {
         }
         for (var element in dropdownlist) {
           db.insert(DBConstant.tblDDList, element);
+        }
+        for (var element in adminDataList) {
+          db.insert(DBConstant.tblMasterAccess, element);
         }
       },
     );

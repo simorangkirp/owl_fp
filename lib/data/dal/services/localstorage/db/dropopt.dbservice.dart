@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:owl_fp/data/model/template.model.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
 import '../../../../../presentation/constant.dart';
 import '../../../../model/drop.opt.model.dart';
+import '../../../../model/mst.admin.model.dart';
 
 class DropOptDBHelper {
   Database? db;
@@ -24,6 +27,41 @@ class DropOptDBHelper {
     db.transaction((txn) async {
       txn.insert(DBConstant.tblFPKaryawan, args);
     });
+  }
+
+  Future<List<MstAdminModel>> mstAdminModel() async {
+    final db = await database;
+    final List<Map<String, dynamic>> res =
+        await db.query(DBConstant.tblMasterAccess);
+    var data = <MstAdminModel>[];
+    for (var el in res) {
+      data.add(MstAdminModel.fromMap(el));
+    }
+    return data;
+  }
+
+  Future<bool> checkTemplateExist(Map<String, dynamic> arg) async {
+    final db = await database;
+    final List<Map<String, dynamic>> results = await db.query(
+      DBConstant.tblFPKaryawan,
+      where: '''
+      sn LIKE ? AND
+      nik LIKE ? AND
+      nama LIKE ? AND
+      template LIKE ?
+      ''',
+      whereArgs: [
+        '%${arg['sn']}%',
+        '%${arg['nik']}%',
+        '%${arg['nama']}%',
+        '%${arg['template']}%',
+      ],
+    );
+    if (results.isEmpty) {
+      return false;
+    } else {
+      return true;
+    }
   }
 
   Future<int> deleteTemplate(String arg) async {

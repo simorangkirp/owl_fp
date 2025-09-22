@@ -44,9 +44,14 @@ class ProfileScreen extends StatelessWidget {
                           ?.copyWith(fontWeight: FontWeight.w700),
                     ),
                     SizedBox(height: 4.h),
-                    Text("Ubah pengguna lain",
-                        style: theme.labelMedium
-                            ?.copyWith(color: ConstColor.gBlueGray)),
+                    InkWell(
+                      onTap: () {
+                        Get.toNamed('/change-user');
+                      },
+                      child: Text("Ubah pengguna lain",
+                          style: theme.labelMedium
+                              ?.copyWith(color: ConstColor.gBlueGray)),
+                    ),
                   ],
                 ),
               ],
@@ -114,11 +119,13 @@ class ProfileScreen extends StatelessWidget {
               style: theme.labelMedium,
             ),
             SizedBox(height: 4.h),
-            Text(
-              "Nama Pengguna",
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: theme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            Obx(
+              () => Text(
+                controller.ip.value,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: theme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
             ),
             Divider(
               thickness: 2.w,

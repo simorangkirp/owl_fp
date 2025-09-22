@@ -7,4 +7,10 @@ class BottomNavController extends GetxController {
   void changeTab(int index) {
     currentIndex.value = index;
   }
+
+  @override
+  Future<void> onInit() async {
+    super.onInit();
+    currentIndex.value = 0;
+  }
 }

@@ -12,12 +12,11 @@ class MasterRemoteDataSourceImpl extends MasterRemoteDataSource {
   final DioClient dioClient;
 
   MasterRemoteDataSourceImpl({required this.dioClient});
-  var box = StorageService();
+  var box = StorageService.instance;
 
   @override
   Future<HttpResponse<dynamic>> remoteKaryawan() async {
     // var ret = <KaryawanModel>[];
-    final box = StorageService();
     final Response response = await dioClient.post(
       '${box.bUrl}/module/setupmasterdata/getmasterdata/load',
       options: Options(

@@ -5,7 +5,9 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'core/injection/dependency.injenction.dart';
+import 'data/dal/services/db.helper.dart';
 import 'infrastructure/navigation/navigation.dart';
 import 'infrastructure/navigation/routes.dart';
 import 'presentation/theme/app.theme.dart';
@@ -14,11 +16,14 @@ import 'presentation/theme/controller.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   var initialRoute = await Routes.initialRoute;
+  log("Initialize SQL Lite");
+  DatabaseHelper().database;
   log("Initialize Dependency Injection");
   await GetStorage.init(); // Init Get Storage
   log("Get Storage Initialized!");
   await DependecyInjection.init(); // Init Dependency Injection
   log("Dependency Injection Initialized!");
+  await initializeDateFormatting('id_ID', null);
   log("Initialize Get Storage");
   runApp(Main(initialRoute));
 }

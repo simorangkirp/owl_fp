@@ -96,5 +96,10 @@ class Nav {
       page: () => TemplateScreen(),
       binding: TemplateControllerBinding(),
     ),
+    GetPage(
+      name: Routes.changeUser,
+      page: () => const ChangeUserScreen(),
+      binding: ChangeUserControllerBinding(),
+    ),
   ];
 }

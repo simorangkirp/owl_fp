@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
-import 'package:owl_fp/data/dal/services/get.storage.dart';
 import 'package:owl_fp/presentation/ui/common/expandable.widget.dart';
 
 import '../../../constant.dart';
@@ -18,7 +16,50 @@ class DeviceInfoComponent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var theme = Theme.of(context);
-    var box = StorageService();
+    opendialog(int index) {
+      return Get.bottomSheet(
+        Container(
+          margin: EdgeInsets.symmetric(vertical: 0.1.sh, horizontal: 0.1.sw),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: Theme.of(context).scaffoldBackgroundColor,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text("Otentikasi"),
+                SizedBox(height: 12.h),
+                const Text("Masukkan Password!."),
+                SizedBox(height: 8.h),
+                TextField(
+                  controller: controller.authDialogCtrl,
+                  onChanged: (value) {
+                    controller.authDialogArg = value;
+                  },
+                ),
+                SizedBox(height: 12.h),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    fixedSize: Size(double.maxFinite, 42.h),
+                  ),
+                  onPressed: () {
+                    controller.authDialogCtrl.clear();
+                    Get.back();
+                    if (index == 1) {
+                      // btctrl.resetFactory(controller.authDialogArg);
+                    }
+                  },
+                  child: const Text('Kirim'),
+                ),
+              ],
+            ),
+          ),
+        ),
+        isScrollControlled: true, // 👈 biar naik waktu keyboard muncul
+      );
+    }
 
     resetLogAbsen() {
       return Column(
@@ -112,7 +153,9 @@ class DeviceInfoComponent extends StatelessWidget {
                       ),
                       SizedBox(height: 12.h),
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          opendialog(1);
+                        },
                         child: Text('Kirim'),
                       ),
                     ],
@@ -180,39 +223,41 @@ class DeviceInfoComponent extends StatelessWidget {
                   Row(
                     children: [
                       Expanded(
-                        child: TypeAheadFormField(
-                          textFieldConfiguration: TextFieldConfiguration(
-                            controller: controller.typeAheadController,
-                            decoration: InputDecoration(
-                              labelStyle: theme.textTheme.labelLarge,
-                              labelText: 'Cari karyawan',
-                              border: OutlineInputBorder(),
-                            ),
+                        child: DropdownButtonFormField<String>(
+                          style: Theme.of(context).textTheme.labelMedium,
+                          decoration: InputDecoration(
+                            contentPadding: ConstPadding.ddBtnPadding,
+                            border: const OutlineInputBorder(),
                           ),
-                          suggestionsCallback: (pattern) {
-                            return controller.karyawanlist.where((item) {
-                              var name = item.namakaryawan ?? "Undefined";
-                              return name
-                                  .toLowerCase()
-                                  .contains(pattern.toLowerCase());
-                            });
+                          // value: ctrl.listSN.first,
+                          value: null,
+                          items: controller.listSN
+                              .map((option) => DropdownMenuItem(
+                                    value: option,
+                                    child: Text(
+                                      option,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ))
+                              .toList(),
+                          onChanged: (value) {
+                            controller.selectedSN.value = value ?? "";
+                            // ctrl.undselectedMenuIndex.value = ctrl.listSN.indexOf(value);
+                            // log('${ctrl.listSN.indexOf(value)}');
                           },
-                          itemBuilder: (context, suggestion) {
-                            return ListTile(
-                                title: Text(suggestion.namakaryawan ?? ""));
-                          },
-                          onSuggestionSelected: (suggestion) {
-                            btctrl.selectedRegisterNm =
-                                suggestion.namakaryawan ?? "";
-                            btctrl.selectedRegisterNIK = suggestion.nik ?? "";
-                            controller.typeAheadController.text =
-                                suggestion.namakaryawan ?? "";
+                          validator: (value) {
+                            if (value == null) {
+                              return 'Please select an option';
+                            }
+                            return null;
                           },
                         ),
                       ),
                       SizedBox(width: 12.w),
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          controller.uploadTempToServerDialog();
+                        },
                         child: Text('Kirim'),
                       ),
                     ],
@@ -270,49 +315,49 @@ class DeviceInfoComponent extends StatelessWidget {
               ],
             ),
           ),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  btctrl.deviceInfo?['sn'] ?? "-",
-                  style: theme.textTheme.labelLarge!
-                      .copyWith(fontWeight: FontWeight.w400),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  btctrl.deviceInfo?['name'] ?? "-",
-                  style: theme.textTheme.labelLarge!
-                      .copyWith(fontWeight: FontWeight.w400),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  btctrl.deviceInfo?['firmware'] ?? "-",
-                  style: theme.textTheme.labelLarge!
-                      .copyWith(fontWeight: FontWeight.w400),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  btctrl.deviceInfo?['mac'] ?? "-",
-                  style: theme.textTheme.labelLarge!
-                      .copyWith(fontWeight: FontWeight.w400),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  btctrl.deviceInfo?['hardware'] ?? "-",
-                  style: theme.textTheme.labelLarge!
-                      .copyWith(fontWeight: FontWeight.w400),
-                ),
-                SizedBox(height: 4.h),
-                Text(
-                  btctrl.deviceInfo?['firmware'] ?? "-",
-                  style: theme.textTheme.labelLarge!
-                      .copyWith(fontWeight: FontWeight.w400),
-                ),
-                SizedBox(height: 4.h),
-              ],
-            ),
-          ),
+          // Expanded(
+          //   child: Column(
+          //     crossAxisAlignment: CrossAxisAlignment.end,
+          //     children: [
+          //       Text(
+          //         btctrl.deviceInfo?['sn'] ?? "-",
+          //         style: theme.textTheme.labelLarge!
+          //             .copyWith(fontWeight: FontWeight.w400),
+          //       ),
+          //       SizedBox(height: 4.h),
+          //       Text(
+          //         btctrl.deviceInfo?['name'] ?? "-",
+          //         style: theme.textTheme.labelLarge!
+          //             .copyWith(fontWeight: FontWeight.w400),
+          //       ),
+          //       SizedBox(height: 4.h),
+          //       Text(
+          //         btctrl.deviceInfo?['firmware'] ?? "-",
+          //         style: theme.textTheme.labelLarge!
+          //             .copyWith(fontWeight: FontWeight.w400),
+          //       ),
+          //       SizedBox(height: 4.h),
+          //       Text(
+          //         btctrl.deviceInfo?['mac'] ?? "-",
+          //         style: theme.textTheme.labelLarge!
+          //             .copyWith(fontWeight: FontWeight.w400),
+          //       ),
+          //       SizedBox(height: 4.h),
+          //       Text(
+          //         btctrl.deviceInfo?['hardware'] ?? "-",
+          //         style: theme.textTheme.labelLarge!
+          //             .copyWith(fontWeight: FontWeight.w400),
+          //       ),
+          //       SizedBox(height: 4.h),
+          //       Text(
+          //         btctrl.deviceInfo?['firmware'] ?? "-",
+          //         style: theme.textTheme.labelLarge!
+          //             .copyWith(fontWeight: FontWeight.w400),
+          //       ),
+          //       SizedBox(height: 4.h),
+          //     ],
+          //   ),
+          // ),
         ],
       );
     }

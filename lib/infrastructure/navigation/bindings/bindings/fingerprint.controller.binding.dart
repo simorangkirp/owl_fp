@@ -1,22 +1,30 @@
 import 'package:get/get.dart';
+
+import 'package:owl_fp/presentation/ui/fingerprint/controllers/btlink.controller.dart';
 import 'package:owl_fp/domain/usecase/fingerprint/delete.template.dart';
 
-import '/domain/usecase/fingerprint/sn.usecase.dart';
-import '/presentation/ui/fingerprint/controllers/fingerprint.controller.dart';
+import '/data/dal/daos/fingerprint/fp.repoimpl.dart';
+import '/data/dal/daos/masterdata/master.repoimpl.dart';
 import '/domain/usecase/fingerprint/get.btstats.opt.usecase.dart';
 import '/domain/usecase/fingerprint/get.dt.opt.usecase.dart';
+import '/domain/usecase/fingerprint/get.mst.admin.dart';
 import '/domain/usecase/fingerprint/get.setting.options.dart';
 import '/domain/usecase/fingerprint/get.template.dart';
 import '/domain/usecase/fingerprint/get.uploaddown.opt.usecase.dart';
-import '/domain/usecase/masterdata/find.karyawan.usecase.dart';
-import '/domain/usecase/fingerprint/send.template.dart';
 import '/domain/usecase/fingerprint/insert.template.dart';
-import '/data/dal/daos/fingerprint/fp.repoimpl.dart';
-import '/data/dal/daos/masterdata/master.repoimpl.dart';
+import '/domain/usecase/fingerprint/send.template.dart';
+import '/domain/usecase/fingerprint/sn.usecase.dart';
+import '/domain/usecase/masterdata/find.karyawan.usecase.dart';
+import '/presentation/ui/fingerprint/controllers/fingerprint.controller.dart';
+
+// import '../../../../domain/usecase/fingerprint/upload.tofinger.dart';
 
 class FingerprintControllerBinding extends Bindings {
   @override
   void dependencies() {
+    Get.lazyPut<BtlinkcontrollerController>(
+      () => BtlinkcontrollerController(),
+    );
     Get.lazyPut(
       () => FindKaryawanTupleUseCase(Get.find<MasterRepositoryImpl>()),
     );
@@ -47,6 +55,12 @@ class FingerprintControllerBinding extends Bindings {
     Get.lazyPut(
       () => SendTemplateUseCase(Get.find<FingerprintRepoImpl>()),
     );
+    Get.lazyPut(
+      () => GetMasterAdminUsecase(Get.find<FingerprintRepoImpl>()),
+    );
+    // Get.lazyPut(
+    //   () => SendTemplateToDeviceUsecase(Get.find<FingerprintRepoImpl>()),
+    // );
     Get.lazyPut<FingerprintController>(
       () => FingerprintController(
         Get.find<FindKaryawanTupleUseCase>(),
@@ -59,6 +73,8 @@ class FingerprintControllerBinding extends Bindings {
         Get.find<GetSNListUsecase>(),
         Get.find<GetDataTemplate>(),
         Get.find<SendTemplateUseCase>(),
+        Get.find<GetMasterAdminUsecase>(),
+        // Get.find<SendTemplateToDeviceUsecase>(),
         // Get.find<TemplateController>(),
       ),
     );

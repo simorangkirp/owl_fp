@@ -6,6 +6,8 @@ abstract class MasterLocalDataSource {
   Future<void> syncKaryawan(List<KaryawanModel> list);
   Future<void> deleteKaryawan();
   Future<List<KaryawanModel>?> searchKaryawanArgs(String args);
+  Future<void> insertLogSnyc(Map<String, dynamic> args);
+  Future<String?> getLog(String args);
 }
 
 class MasterLocalDataSourceImpl extends MasterLocalDataSource {
@@ -26,5 +28,15 @@ class MasterLocalDataSourceImpl extends MasterLocalDataSource {
   Future<List<KaryawanModel>?> searchKaryawanArgs(String args) async {
     var res = await databaseHelper.searchKaryawanTuple(args);
     return res;
+  }
+
+  @override
+  Future<void> insertLogSnyc(Map<String, dynamic> args) async {
+    await databaseHelper.addLog(args);
+  }
+
+  @override
+  Future<String?> getLog(String args) async {
+    return await databaseHelper.getLastData(args);
   }
 }

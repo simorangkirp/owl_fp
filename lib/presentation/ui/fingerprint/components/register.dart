@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
@@ -16,7 +18,7 @@ class RegisterComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context).textTheme;
 
-    opendialog() {
+    opendialog(int index) {
       return Get.dialog(
         Scaffold(
           resizeToAvoidBottomInset: false,
@@ -46,6 +48,9 @@ class RegisterComponent extends StatelessWidget {
                     onPressed: () async {
                       btctrl.authCtrl.clear();
                       Get.back();
+                      // index == 0
+                      //     ? await btctrl.sendRegist()
+                      //     : await btctrl.deleteByNik();
                     },
                     child: const Text('Kirim'),
                   ),
@@ -54,6 +59,71 @@ class RegisterComponent extends StatelessWidget {
             ),
           ),
         ),
+      );
+    }
+
+    deleteByNikWidget() {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text("Hapus data fingerprint dari NIK"),
+          Divider(),
+          SizedBox(height: 12.h),
+          TypeAheadFormField(
+            textFieldConfiguration: TextFieldConfiguration(
+              controller: controller.typeAheadController,
+              decoration: InputDecoration(
+                labelStyle: theme.labelLarge,
+                labelText: 'Cari karyawan',
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            suggestionsCallback: (pattern) {
+              return controller.karyawanlist.where((item) {
+                var name = item.namakaryawan ?? "Undefined";
+                return name.toLowerCase().contains(pattern.toLowerCase());
+              });
+            },
+            itemBuilder: (context, suggestion) {
+              return ListTile(title: Text(suggestion.namakaryawan ?? ""));
+            },
+            onSuggestionSelected: (suggestion) {
+              btctrl.selectedDeleteNm = suggestion.namakaryawan ?? "";
+              btctrl.selectedDeleteNIK = suggestion.nik ?? "";
+              controller.taDeleteCtrl.text = suggestion.namakaryawan ?? "";
+            },
+          ),
+          SizedBox(height: 12.h),
+          DropdownButtonFormField<String>(
+            style: Theme.of(context).textTheme.labelMedium,
+            decoration: InputDecoration(
+              contentPadding: ConstPadding.ddBtnPadding,
+              border: const OutlineInputBorder(),
+            ),
+            // value: ctrl.listSN.first,
+            value: null,
+            items: controller.listSN
+                .map((option) => DropdownMenuItem(
+                      value: option,
+                      child: Text(
+                        option,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ))
+                .toList(),
+            onChanged: (value) {
+              controller.selectedSN.value = value ?? "";
+              // ctrl.undselectedMenuIndex.value = ctrl.listSN.indexOf(value);
+              // log('${ctrl.listSN.indexOf(value)}');
+            },
+            validator: (value) {
+              if (value == null) {
+                return 'Please select an option';
+              }
+              return null;
+            },
+          ),
+        ],
       );
     }
 
@@ -110,13 +180,12 @@ class RegisterComponent extends StatelessWidget {
           SizedBox(height: 12.h),
           ElevatedButton(
             onPressed: () {
-              opendialog().then((value) async {
-                btctrl.waitRegist();
-                await btctrl.sendRegist();
-              });
+              opendialog(0);
             },
             child: Text('Kirim'),
           ),
+          SizedBox(height: 12.h),
+          deleteByNikWidget(),
         ],
       ),
     );

@@ -1,3 +1,5 @@
+import 'package:owl_fp/core/resources/data.state.dart';
+
 import '../../repository/auth.repo.dart';
 
 class LoginUseCase {
@@ -5,7 +7,7 @@ class LoginUseCase {
 
   LoginUseCase(this.repository);
 
-  Future<bool> execute(String email, String password) {
+  Future<DataState> execute(String email, String password) {
     return repository.login(email, password);
   }
 }

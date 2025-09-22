@@ -1,8 +1,6 @@
-import '../../data/dio/dio.exception.dart';
-
 abstract class DataState<T> {
   final T? data;
-  final DioException? error;
+  final Object? error; // ✅ bisa String, DioError, Exception, dll
   const DataState({this.data, this.error});
 }
 
@@ -11,5 +9,5 @@ class DataSuccess<T> extends DataState<T> {
 }
 
 class DataError<T> extends DataState<T> {
-  const DataError(DioException error) : super(error: error);
+  const DataError(Object error) : super(error: error);
 }

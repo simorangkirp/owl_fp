@@ -1,3 +1,6 @@
+import 'dart:developer';
+import 'package:intl/intl.dart';
+
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -21,6 +24,40 @@ class KaryawanDBHelper {
   Future<int> deleteAllKaryawan() async {
     final db = await database;
     return await db.delete(DBConstant.tblKaryawan);
+  }
+
+  Future<void> addLog(Map<String, dynamic> args) async {
+    log("Add Log Last Sync\n");
+    log(args["name"]);
+    log(args["lastupdate"].toString());
+    final db = await database;
+    db.transaction((txn) async {
+      txn.insert(DBConstant.tblLogMstSync, args);
+    });
+  }
+
+  Future<String?> getLastData(String args) async {
+    log("Masuk Manggil DB");
+    final db = await database;
+    final List<Map<String, dynamic>> results = await db.query(
+      DBConstant.tblLogMstSync,
+      where: 'name LIKE ?',
+      whereArgs: ['%$args%'],
+      orderBy: 'lastUpdate DESC', // urutkan dari terbaru
+      limit: 1, // cuma ambil 1 data terakhir
+    );
+
+    if (results.isNotEmpty) {
+      log(results.first['lastUpdate'].toString());
+      // DateTime.fromMillisecondsSinceEpoch(results.first['lastUpdate'] as int);
+      DateTime dt = DateTime.parse(DateTime.fromMillisecondsSinceEpoch(
+              results.first['lastUpdate'] as int)
+          .toString());
+      String formatted =
+          DateFormat("EEEE, dd MMMM yyyy HH:mm:ss", "id_ID").format(dt);
+      return formatted;
+    }
+    return null; // kalau ga ada data
   }
 
   // Sync Karyawan

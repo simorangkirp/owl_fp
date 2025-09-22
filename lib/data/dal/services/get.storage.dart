@@ -2,16 +2,22 @@
 import 'package:get_storage/get_storage.dart';
 
 class StorageService {
+  // ✅ Singleton
+  StorageService._(); // private constructor
+  static final StorageService instance = StorageService._();
+
   final GetStorage _box = GetStorage();
 
   // Keys
   static const String isLoggedInKey = 'isLoggedIn';
   static const String usernameKey = 'username';
+  static const String pwdKey = 'password';
   static const String tokenKey = 'token';
   static const String bUrlKey = 'baseurl';
   static const String kebunKey = 'kebun';
+  static const String expApiKey = 'expApi';
 
-  //? Fingerprint
+  // Fingerprint Keys
   static const String condevSNKey = 'fpsn';
   static const String condevNameKey = 'fpname';
   static const String condevSensorKey = 'fpsensor';
@@ -25,14 +31,17 @@ class StorageService {
   static const String condevHardwareKey = 'fphard';
   static const String condevMacKey = 'fpmac';
 
-  // Write
+  // ✅ Write
   Future<void> saveIsLoggedIn(bool value) async =>
       _box.write(isLoggedInKey, value);
   Future<void> saveUsername(String username) async =>
       _box.write(usernameKey, username);
+  Future<void> savePwd(String args) async => _box.write(pwdKey, args);
+  Future<void> saveExpKey(String args) async => _box.write(expApiKey, args);
   Future<void> saveToken(String token) async => _box.write(tokenKey, token);
   Future<void> saveKebun(String token) async => _box.write(kebunKey, token);
   Future<void> saveBUrl(String bUrl) async => _box.write(bUrlKey, bUrl);
+
   Future<void> saveFPInfo(Map<String, dynamic> value) async {
     _box.write(condevSNKey, value['sn']);
     _box.write(condevNameKey, value['name']);
@@ -46,10 +55,12 @@ class StorageService {
     _box.write(condevMacKey, value['mac']);
   }
 
-  // Read
+  // ✅ Read
   bool get isLoggedIn => _box.read(isLoggedInKey) ?? false;
   String? get username => _box.read(usernameKey);
+  String? get pwd => _box.read(pwdKey);
   String? get token => _box.read(tokenKey);
+  String? get expToken => _box.read(expApiKey);
   String? get bUrl => _box.read(bUrlKey);
   String? get kebun => _box.read(kebunKey);
   String? get condevSN => _box.read(condevSNKey);
@@ -63,7 +74,7 @@ class StorageService {
   String? get condevMac => _box.read(condevMacKey);
   String? get condevHardware => _box.read(condevHardwareKey);
 
-  // Remove
+  // ✅ Remove
   Future<void> clearAll() async => _box.erase();
   Future<void> removeToken() async => _box.remove(tokenKey);
 }

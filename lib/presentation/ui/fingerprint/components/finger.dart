@@ -70,40 +70,43 @@ class FingerComponents extends StatelessWidget {
                     style: ElevatedButton.styleFrom(
                       padding: ConstPadding.eleBtnPadding,
                     ),
-                    onPressed: controller.isDiscovering.value
-                        ? null
-                        : controller.btStats,
-                    child: Text(controller.isDiscovering.value
-                        ? 'Scanning...'
-                        : 'Start Scan'),
+                    onPressed: () {},
+                    child: SizedBox(),
+                    // controller.isDiscovering.value
+                    //     ? null
+                    //     : controller.btStats,
+                    // child:
+                    // Text(controller.isDiscovering.value
+                    //     ? 'Scanning...'
+                    //     : 'Start Scan'),
                   ),
                 ),
               ),
             ],
           ),
-          Obx(() => ListView(
-                controller: discoverdCtrl,
-                shrinkWrap: true,
-                children: controller.discoveredDevices.map((result) {
-                  final device = result.device;
-                  return ListTile(
-                    title: Text(device.name ?? "Unknown Device"),
-                    subtitle: Text(device.address),
-                    trailing: ElevatedButton(
-                      child: Obx(() {
-                        final isConnected =
-                            controller.connectionStates[device.address] ??
-                                false;
-                        return Text(isConnected ? "Disconnect" : "Connect");
-                      }),
-                      onPressed: () {
-                        controller.connectDialog();
-                        controller.connectToDevice(device);
-                      },
-                    ),
-                  );
-                }).toList(),
-              ))
+          // Obx(() => ListView(
+          //       controller: discoverdCtrl,
+          //       shrinkWrap: true,
+          //       children: controller.discoveredDevices.map((result) {
+          //         final device = result.device;
+          //         return ListTile(
+          //           title: Text(device.name ?? "Unknown Device"),
+          //           subtitle: Text(device.address),
+          //           trailing: ElevatedButton(
+          //             child: Obx(() {
+          //               final isConnected =
+          //                   controller.connectionStates[device.address] ??
+          //                       false;
+          //               return Text(isConnected ? "Disconnect" : "Connect");
+          //             }),
+          //             onPressed: () {
+          //               controller.connectDialog();
+          //               controller.connectToDevice(device);
+          //             },
+          //           ),
+          //         );
+          //       }).toList(),
+          //     ))
         ],
       ),
     );

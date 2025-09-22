@@ -1,17 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons/lucide_icons.dart'; // contoh: ganti sesuai lib ikon lo
 
 class DashboardIconMenuModel {
   String? menuNm;
   String? path;
   int? iconIndex;
-  IconData? menuIcon;
 
   DashboardIconMenuModel({
     this.menuNm,
     this.path,
-    this.menuIcon,
     this.iconIndex,
   });
+
+  // Getter buat ambil IconData dari index (konstanta, biar aman di release)
+  IconData get menuIcon {
+    switch (iconIndex) {
+      case 1:
+        return LucideIcons.fingerprint;
+      case 2:
+        return LucideIcons.milk;
+      case 3:
+        return LucideIcons.clipboardList;
+      default:
+        return LucideIcons.loader; // fallback icon bawaan
+    }
+  }
 
   // Serialize ke Map buat disimpan ke DB
   Map<String, dynamic> toMap() {
@@ -19,10 +32,6 @@ class DashboardIconMenuModel {
       'menuNm': menuNm,
       'path': path,
       'iconIndex': iconIndex,
-      'iconCodePoint': menuIcon?.codePoint,
-      'iconFontFamily': menuIcon?.fontFamily,
-      'iconFontPackage': menuIcon?.fontPackage,
-      'iconMatchTextDirection': menuIcon?.matchTextDirection == true ? 1 : 0,
     };
   }
 
@@ -32,14 +41,6 @@ class DashboardIconMenuModel {
       menuNm: map['menuNm'],
       path: map['path'],
       iconIndex: map['iconIndex'],
-      menuIcon: map['iconCodePoint'] != null
-          ? IconData(
-              map['iconCodePoint'],
-              fontFamily: map['iconFontFamily'],
-              fontPackage: map['iconFontPackage'],
-              matchTextDirection: map['iconMatchTextDirection'] == 1,
-            )
-          : null,
     );
   }
 }
