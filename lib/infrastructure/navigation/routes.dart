@@ -1,0 +1,21 @@
+class Routes {
+  static Future<String> get initialRoute async {
+    return splash;
+  }
+
+  static const about = '/about';
+  static const dashboard = '/dashboard';
+  static const fingerprint = '/fingerprint';
+  static const help = '/help';
+  static const home = '/home';
+  static const language = '/language';
+  static const login = '/login';
+  static const masterdata = '/masterdata';
+  static const profile = '/profile';
+  static const sampletext = '/sampletext';
+  static const setup = '/setup';
+  static const splash = '/splash';
+  static const template = '/template';
+  static const theme = '/theme';
+  static const changeUser = '/change-user';
+}

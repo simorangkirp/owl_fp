@@ -1,0 +1,19 @@
+import 'package:owl_fp_newer/domain/entity/profile.entity.dart';
+import 'package:owl_fp_newer/domain/repository/profile.repository.dart';
+
+import '../../services/apis/profile.api.dart';
+import '../../services/localstorage/profile.db.dart';
+
+class ProfileRepositoryImpl implements ProfileRepository {
+  final ProfileRemoteDataSource remoteDataSource;
+  final ProfileLocalDataSource localDataSource;
+
+  ProfileRepositoryImpl(this.remoteDataSource, this.localDataSource);
+
+  @override
+  Future<ProfileEntity> getUser() async {
+    var res = await localDataSource.getUser();
+    var data = res.toEntity();
+    return data;
+  }
+}

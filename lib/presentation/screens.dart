@@ -1,0 +1,15 @@
+export 'package:owl_fp_newer/presentation/ui/change_user/change_user.screen.dart';
+export 'package:owl_fp_newer/presentation/ui/about/about.screen.dart';
+export 'package:owl_fp_newer/presentation/ui/dashboard/dashboard.screen.dart';
+export 'package:owl_fp_newer/presentation/ui/fingerprint/fingerprint.screen.dart';
+export 'package:owl_fp_newer/presentation/ui/help/help.screen.dart';
+export 'package:owl_fp_newer/presentation/ui/home/home.screen.dart';
+export 'package:owl_fp_newer/presentation/ui/language/language.screen.dart';
+export 'package:owl_fp_newer/presentation/ui/login/login.screen.dart';
+export 'package:owl_fp_newer/presentation/ui/masterdata/masterdata.screen.dart';
+export 'package:owl_fp_newer/presentation/ui/profile/profile.screen.dart';
+export 'package:owl_fp_newer/presentation/ui/sampletext/sampletext.screen.dart';
+export 'package:owl_fp_newer/presentation/ui/setup/setup.screen.dart';
+export 'package:owl_fp_newer/presentation/ui/splash/splash.screen.dart';
+export 'package:owl_fp_newer/presentation/ui/template/template.screen.dart';
+export 'package:owl_fp_newer/presentation/ui/theme/theme.screen.dart';
