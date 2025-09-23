@@ -1,6 +1,6 @@
-# owl_fp
+# Mobile OWL Fingerprint
 
-A new Flutter project.
+A new Flutter project for Android 9 for safe use.
 
 ## Getting Started
 
