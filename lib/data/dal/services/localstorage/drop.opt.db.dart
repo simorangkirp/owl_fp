@@ -7,6 +7,7 @@ import 'db/dropopt.dbservice.dart';
 abstract class DropOptLocalDataSource {
   Future<List<DropOptionModel>> getSettingOpt(String arg);
   Future<List<String>> getUploadDownloadOpt(String arg);
+  Future<List<String>> localImplAdminOpt(String arg);
   Future<List<String>> getBtstsOpt(String arg);
   Future<List<String>> getDtimeOpt(String arg);
   Future<void> insertTemplateAll(List<Map<String, dynamic>> arg);
@@ -78,5 +79,10 @@ class DropOptLocalDataSourceImpl extends DropOptLocalDataSource {
   @override
   Future<List<MstAdminModel>> getMstAdminDb() async {
     return await databaseHelper.mstAdminModel();
+  }
+
+  @override
+  Future<List<String>> localImplAdminOpt(String arg) async {
+    return await databaseHelper.getListStringOptQuery(arg);
   }
 }

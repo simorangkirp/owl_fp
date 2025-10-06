@@ -16,6 +16,8 @@ class StorageService {
   static const String bUrlKey = 'baseurl';
   static const String kebunKey = 'kebun';
   static const String expApiKey = 'expApi';
+  static const String appthemeKey = 'appTheme';
+  static const String applangKey = 'appLang';
 
   // Fingerprint Keys
   static const String condevSNKey = 'fpsn';
@@ -34,6 +36,9 @@ class StorageService {
   // ✅ Write
   Future<void> saveIsLoggedIn(bool value) async =>
       _box.write(isLoggedInKey, value);
+  Future<void> saveAppTheme(bool value) async => _box.write(appthemeKey, value);
+  Future<void> saveAppLang(String languageCode) async =>
+      _box.write(applangKey, languageCode);
   Future<void> saveUsername(String username) async =>
       _box.write(usernameKey, username);
   Future<void> savePwd(String args) async => _box.write(pwdKey, args);
@@ -57,6 +62,8 @@ class StorageService {
 
   // ✅ Read
   bool get isLoggedIn => _box.read(isLoggedInKey) ?? false;
+  bool get isDarkmode => _box.read(appthemeKey) ?? false;
+  String? get whatLang => _box.read(applangKey);
   String? get username => _box.read(usernameKey);
   String? get pwd => _box.read(pwdKey);
   String? get token => _box.read(tokenKey);

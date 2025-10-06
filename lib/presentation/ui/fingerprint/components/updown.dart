@@ -65,10 +65,16 @@ class UpdownComponent extends StatelessWidget {
       padding: ConstPadding.screenPadding,
       child: ListView(
         children: [
-          const Text("Unduh & Kirim Template"),
+          Text(
+            "undFinger".tr,
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.w600),
+          ),
           const Divider(),
           SizedBox(height: 12.h),
-          const Text("Pilih Menu:"),
+          Text("${"chsOpt".tr}:"),
           SizedBox(height: 8.h),
           DropdownButtonFormField<String>(
             style: Theme.of(context).textTheme.labelMedium,
@@ -94,7 +100,7 @@ class UpdownComponent extends StatelessWidget {
             },
             validator: (value) {
               if (value == null) {
-                return 'Please select an option';
+                return 'plSlcOpt'.tr;
               }
               return null;
             },
@@ -112,7 +118,7 @@ class UpdownComponent extends StatelessWidget {
                     focusNode: focusNode,
                     decoration: InputDecoration(
                       labelStyle: theme.labelLarge,
-                      labelText: 'Cari karyawan',
+                      labelText: 'findEmply'.tr,
                       border: const OutlineInputBorder(),
                     ),
                   );
@@ -166,72 +172,13 @@ class UpdownComponent extends StatelessWidget {
                 },
                 validator: (value) {
                   if (value == null) {
-                    return 'Please select an option';
+                    return 'plSlcOpt'.tr;
                   }
                   return null;
                 },
               ),
-              // FutureBuilder(
-              //   future: ctrl.getSNList(),
-              //   builder: (context, snapshot) {
-              //     return DropdownButtonFormField<String>(
-              //       decoration: const InputDecoration(
-              //         border: OutlineInputBorder(),
-              //       ),
-              //       value: null,
-              //       items: ctrl.listSN
-              //           .map((option) => DropdownMenuItem(
-              //                 value: option,
-              //                 child: Text(option),
-              //               ))
-              //           .toList(),
-              //       onChanged: (value) {
-              //         ctrl.selectedSN.value = value ?? "";
-              //       },
-              //       validator: (value) {
-              //         if (value == null) {
-              //           return 'Please select an option';
-              //         }
-              //         return null;
-              //       },
-              //     );
-              //   },
-              // ),
             ),
           ),
-          // Obx(
-          //   () => Visibility(
-          //     visible: ctrl.undselectedMenuIndex.value == 2,
-          //     child: DropdownButtonFormField<String>(
-          //       style: Theme.of(context).textTheme.labelMedium,
-          //       decoration: InputDecoration(
-          //         contentPadding: ConstPadding.ddBtnPadding,
-          //         border: const OutlineInputBorder(),
-          //       ),
-          //       value: ctrl.uploadDownloadList.first,
-          //       items: ctrl.uploadDownloadList
-          //           .map((option) => DropdownMenuItem(
-          //                 value: option,
-          //                 child: Text(
-          //                   option,
-          //                   overflow: TextOverflow.ellipsis,
-          //                 ),
-          //               ))
-          //           .toList(),
-          //       onChanged: (value) {
-          //         ctrl.selectedUpDown1.value = value ?? "";
-          //         ctrl.undselectedMenuIndex.value =
-          //             ctrl.uploadDownloadList.indexOf(value);
-          //       },
-          //       validator: (value) {
-          //         if (value == null) {
-          //           return 'Please select an option';
-          //         }
-          //         return null;
-          //       },
-          //     ),
-          //   ),
-          // ),
           Obx(
             () => Visibility(
                 visible: ctrl.undselectedMenuIndex.value != 0,
@@ -243,7 +190,7 @@ class UpdownComponent extends StatelessWidget {
             onPressed: () {
               opendialog(ctrl.undselectedMenuIndex.value);
             },
-            child: const Text('Kirim'),
+            child: Text('send'.tr),
           ),
         ],
       ),

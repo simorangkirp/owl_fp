@@ -14,14 +14,14 @@ class ChangeUserScreen extends GetView<ChangeUserController> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ubah Pengguna Lain'),
+        title: Text('appbarChgUser'.tr),
         centerTitle: true,
       ),
       body: Padding(
         padding: ConstPadding.screenPadding,
         child: ListView(
           children: [
-            const Text("Nama Pengguna"),
+            Text("username".tr),
             SizedBox(height: 8.h),
             TextFormField(
               onChanged: (value) {
@@ -36,7 +36,7 @@ class ChangeUserScreen extends GetView<ChangeUserController> {
               ),
             ),
             SizedBox(height: 12.h),
-            const Text("Sandi"),
+            Text("password".tr),
             SizedBox(height: 8.h),
             Obx(
               () => TextFormField(
@@ -108,7 +108,7 @@ class ChangeUserScreen extends GetView<ChangeUserController> {
                     }
                   },
                   child: Text(
-                    "Masuk",
+                    "signIn".tr,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: ConstColor.gCultured,

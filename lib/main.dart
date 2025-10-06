@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'core/injection/dependency.injenction.dart';
+import 'core/resources/app.translation.dart';
 import 'data/dal/services/db.helper.dart';
 import 'infrastructure/navigation/navigation.dart';
 import 'infrastructure/navigation/routes.dart';
@@ -48,6 +49,9 @@ class Main extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           initialRoute: initialRoute,
           getPages: Nav.routes,
+          translations: AppTranslations(), // ⬅️ tambahin translations
+          locale: const Locale('id', 'ID'), // ⬅️ default bahasa
+          fallbackLocale: const Locale('en', 'US'), // ⬅️ fallback
           unknownRoute: GetPage(
             name: '/404',
             page: () => Scaffold(

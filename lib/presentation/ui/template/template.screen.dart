@@ -16,14 +16,14 @@ class TemplateScreen extends StatelessWidget {
     var theme = Theme.of(context).textTheme;
     return Scaffold(
         appBar: AppBar(
-          title: Text('Daftar Template'),
+          title: Text('templateList'.tr),
           centerTitle: true,
         ),
         body: Padding(
           padding: ConstPadding.screenPadding,
           child: ListView(
             children: [
-              Text("SN Mesin :", style: theme.labelMedium),
+              Text("${"idMachine".tr}:", style: theme.labelMedium),
               SizedBox(height: 4.h),
               FutureBuilder(
                 future: controller.getSN(),
@@ -45,7 +45,7 @@ class TemplateScreen extends StatelessWidget {
                     },
                     validator: (value) {
                       if (value == null) {
-                        return 'Please select an option';
+                        return 'plSlcOpt'.tr;
                       }
                       return null;
                     },
@@ -53,7 +53,7 @@ class TemplateScreen extends StatelessWidget {
                 },
               ),
               SizedBox(height: 12.h),
-              Text("Nama Karyawan :", style: theme.labelMedium),
+              Text("${"emplNm".tr}:", style: theme.labelMedium),
               SizedBox(height: 4.h),
               Obx(
                 () => TypeAheadField<String>(
@@ -90,7 +90,7 @@ class TemplateScreen extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 12.h),
-              Text("Daftar Fingerprint", style: theme.labelMedium),
+              Text("fingerList".tr, style: theme.labelMedium),
               SizedBox(height: 8.h),
               Obx(
                 () => controller.listTemplate.isNotEmpty

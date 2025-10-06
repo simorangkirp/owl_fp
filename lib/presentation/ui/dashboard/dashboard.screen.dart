@@ -10,131 +10,84 @@ import '../../constant.dart';
 import 'controllers/dashboard.controller.dart';
 
 class DashboardScreen extends StatelessWidget {
-  DashboardScreen({Key? key}) : super(key: key);
+  DashboardScreen({super.key});
   final controller = Get.find<DashboardController>();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).textTheme;
-    return Scaffold(
-      appBar: AppBar(
-        leading: const Icon(Icons.refresh),
-        title: const Align(
-            alignment: Alignment.centerRight,
-            child: Text('OWL Mobile - Fingerprint')),
-        centerTitle: true,
-      ),
-      body: ListView(
-        children: [
-          Container(
-            color: ConstColor.gCultured,
-            child: Padding(
-              padding: ConstPadding.screenPadding,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    "Menu",
-                    style:
-                        theme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-                  ),
-                  SizedBox(height: 16.h),
-                  FutureBuilder(
-                    future: controller.geticonMenu(),
-                    builder: (context, snapshot) {
-                      return controller.menuItem.isEmpty
-                          ? const SizedBox()
-                          : GridView.builder(
-                              shrinkWrap: true,
-                              itemCount: controller.menuItem.length,
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                crossAxisSpacing: 12.w,
-                                mainAxisSpacing: 8.h,
-                              ),
-                              itemBuilder: (context, index) {
-                                var data = controller.menuItem[index];
-                                return Column(
-                                  children: [
-                                    Material(
-                                      elevation: 2,
-                                      borderRadius: BorderRadius.circular(240),
-                                      child: InkWell(
-                                        onTap: () {
-                                          Get.toNamed(data.path ?? "");
-                                        },
-                                        child: Container(
-                                            decoration: BoxDecoration(
-                                              shape: BoxShape.circle,
-                                              color: const Color(0xff009688)
-                                                  .withOpacity(0.2),
-                                            ),
-                                            padding: EdgeInsets.all(12.w),
-                                            child: Icon(
-                                              data.menuIcon,
-                                              color: ConstColor.lBerBlue,
-                                              size: 24.w,
-                                            )),
-                                      ),
-                                    ),
-                                    SizedBox(height: 12.h),
-                                    Text(data.menuNm ?? ""),
-                                  ],
-                                );
-                              },
-                            );
-                    },
-                  ),
-                  // GetBuilder<DashboardController>(builder: (x) {
-                  //   return Obx(
-                  //     () => GridView.builder(
-                  //       shrinkWrap: true,
-                  //       itemCount: x.menuItem.length,
-                  //       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  //         crossAxisCount: 3,
-                  //         crossAxisSpacing: 12.w,
-                  //         mainAxisSpacing: 8.h,
-                  //       ),
-                  //       itemBuilder: (context, index) {
-                  //         var data = x.menuItem[index];
-                  //         return Column(
-                  //           children: [
-                  //             Material(
-                  //               elevation: 2,
-                  //               borderRadius: BorderRadius.circular(240),
-                  //               child: InkWell(
-                  //                 onTap: () {
-                  //                   Get.toNamed(data.path ?? "");
-                  //                 },
-                  //                 child: Container(
-                  //                     decoration: BoxDecoration(
-                  //                       shape: BoxShape.circle,
-                  //                       color: const Color(0xff009688)
-                  //                           .withOpacity(0.2),
-                  //                     ),
-                  //                     padding: EdgeInsets.all(12.w),
-                  //                     child: Icon(
-                  //                       data.menuIcon,
-                  //                       color: ConstColor.lBerBlue,
-                  //                       size: 24.w,
-                  //                     )),
-                  //               ),
-                  //             ),
-                  //             SizedBox(height: 12.h),
-                  //             Text(data.menuNm ?? ""),
-                  //           ],
-                  //         );
-                  //       },
-                  //     ),
-                  //   );
-                  // }),
-                ],
+
+    menuItem() {
+      return Container(
+        color: Theme.of(context).colorScheme.tertiary,
+        child: Padding(
+          padding: ConstPadding.screenPadding,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "Menu",
+                style: theme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
               ),
-            ),
+              SizedBox(height: 16.h),
+              FutureBuilder(
+                future: controller.geticonMenu(),
+                builder: (context, snapshot) {
+                  return controller.menuItem.isEmpty
+                      ? const SizedBox()
+                      : GridView.builder(
+                          shrinkWrap: true,
+                          itemCount: controller.menuItem.length,
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 3,
+                            crossAxisSpacing: 12.w,
+                            mainAxisSpacing: 8.h,
+                          ),
+                          itemBuilder: (context, index) {
+                            var data = controller.menuItem[index];
+                            return Column(
+                              children: [
+                                Material(
+                                  elevation: 2,
+                                  borderRadius: BorderRadius.circular(240),
+                                  child: InkWell(
+                                    onTap: () {
+                                      Get.toNamed(data.path ?? "");
+                                    },
+                                    child: Container(
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: const Color(0xff009688)
+                                              .withOpacity(0.2),
+                                        ),
+                                        padding: EdgeInsets.all(12.w),
+                                        child: Icon(
+                                          data.menuIcon,
+                                          color: ConstColor.gTurquoise,
+                                          size: 24.w,
+                                        )),
+                                  ),
+                                ),
+                                SizedBox(height: 12.h),
+                                Text(data.menuNm ?? ""),
+                              ],
+                            );
+                          },
+                        );
+                },
+              ),
+            ],
           ),
-          SizedBox(height: 16.h),
+        ),
+      );
+    }
+
+    listMasterData() {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Padding(
             padding: ConstPadding.screenPadding,
             child: Row(
@@ -146,7 +99,7 @@ class DashboardScreen extends StatelessWidget {
                       theme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
                 Text(
-                  "Lihat Semua",
+                  "seeAll".tr,
                   style: theme.labelLarge?.copyWith(
                       fontWeight: FontWeight.w700, color: ConstColor.gBlueGray),
                 ),
@@ -169,7 +122,7 @@ class DashboardScreen extends StatelessWidget {
                     },
                     child: Container(
                       decoration: BoxDecoration(
-                        color: ConstColor.gCultured,
+                        color: Theme.of(context).colorScheme.tertiary,
                         borderRadius: BorderRadius.circular(8.w),
                       ),
                       padding: ConstPadding.screenPadding,
@@ -195,6 +148,23 @@ class DashboardScreen extends StatelessWidget {
               );
             },
           ),
+        ],
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: const Icon(Icons.refresh),
+        title: const Align(
+            alignment: Alignment.centerRight,
+            child: Text('OWL Mobile - Fingerprint')),
+        centerTitle: true,
+      ),
+      body: ListView(
+        children: [
+          menuItem(),
+          SizedBox(height: 16.h),
+          listMasterData(),
         ],
       ),
     );

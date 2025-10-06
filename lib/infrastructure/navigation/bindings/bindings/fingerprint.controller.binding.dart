@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:owl_fp_newer/domain/usecase/fingerprint/delete.template.dart';
 import 'package:owl_fp_newer/presentation/ui/fingerprint/controllers/bt14_ctrl_controller.dart';
 
+import '/domain/usecase/fingerprint/get.admin.ddoptlist.dart';
 import '/data/dal/daos/fingerprint/fp.repoimpl.dart';
 import '/data/dal/daos/masterdata/master.repoimpl.dart';
 import '/domain/usecase/fingerprint/get.btstats.opt.usecase.dart';
@@ -27,6 +28,9 @@ class FingerprintControllerBinding extends Bindings {
     );
     Get.lazyPut(
       () => GetUploadDownloadOptionsUseCase(Get.find<FingerprintRepoImpl>()),
+    );
+    Get.lazyPut(
+      () => GetAdminOptionsUseCase(Get.find<FingerprintRepoImpl>()),
     );
     Get.lazyPut(
       () => GetSettingOptionsUseCase(Get.find<FingerprintRepoImpl>()),
@@ -66,6 +70,7 @@ class FingerprintControllerBinding extends Bindings {
       () => FingerprintController(
         Get.find<FindKaryawanTupleUseCase>(),
         Get.find<GetUploadDownloadOptionsUseCase>(),
+        Get.find<GetAdminOptionsUseCase>(),
         Get.find<GetSettingOptionsUseCase>(),
         Get.find<GetDTOptUseCase>(),
         Get.find<GetBtstatsOptUseCase>(),

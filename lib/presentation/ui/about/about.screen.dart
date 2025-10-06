@@ -12,7 +12,7 @@ class AboutScreen extends GetView<AboutController> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tentang Aplikasi'),
+        title: Text('appbarAboutApp'.tr),
       ),
       body: Padding(
         padding: ConstPadding.screenPadding,
@@ -33,7 +33,7 @@ class AboutScreen extends GetView<AboutController> {
                 fixedSize: Size(double.maxFinite, 42.h),
               ),
               onPressed: () {},
-              child: const Text('Cek Versi Terbaru'),
+              child: Text('ltsVer'.tr),
             ),
             const Spacer(),
             const Text(

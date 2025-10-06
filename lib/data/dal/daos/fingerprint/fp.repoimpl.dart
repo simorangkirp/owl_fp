@@ -84,6 +84,11 @@ class FingerprintRepoImpl implements FingerprintRepository {
     return await localDataSource.getMstAdminDb();
   }
 
+  @override
+  Future<List<String>> getAdminOpt(String arg) async {
+    return await localDataSource.getUploadDownloadOpt(arg);
+  }
+
   // @override
   // Future<void> sendTemptoDevice(Map<String, dynamic> args) async {
   //   return await localDataSource.insertTemplateOnce(args);

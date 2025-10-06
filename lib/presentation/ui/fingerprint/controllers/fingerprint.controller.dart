@@ -4,11 +4,15 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:owl_fp_newer/domain/entity/dropopt.entity.dart';
 
+import '../../../../core/resources/data.state.dart';
+import '../../../../core/resources/utils.dart';
 import '../../../../data/dal/services/get.storage.dart';
 import '../../../../data/model/mst.admin.model.dart';
 import '../../../../domain/entity/karyawan.entity.dart';
+import '../../../../domain/usecase/fingerprint/get.admin.ddoptlist.dart';
 import '../../../../domain/usecase/fingerprint/get.btstats.opt.usecase.dart';
 import '../../../../domain/usecase/fingerprint/get.dt.opt.usecase.dart';
 import '../../../../domain/usecase/fingerprint/get.mst.admin.dart';
@@ -21,11 +25,13 @@ import '../../../../domain/usecase/fingerprint/insert.template.dart';
 import '../../../../domain/usecase/fingerprint/delete.template.dart';
 import '../../../../domain/usecase/fingerprint/get.template.dart';
 import '../../../../domain/usecase/fingerprint/send.template.dart';
-import 'bt.controller.dart';
+import '../../login/controllers/login.controller.dart';
+import 'bt14_ctrl_controller.dart';
 
 class FingerprintController extends GetxController {
   final FindKaryawanTupleUseCase _searchKaryawan;
   final GetUploadDownloadOptionsUseCase _getUploadDownloadOpt;
+  final GetAdminOptionsUseCase _getAdminOpt;
   final GetSettingOptionsUseCase _getSettingOpt;
   final GetDTOptUseCase _getDtOpt;
   final GetBtstatsOptUseCase _getBtstatsOptUseCase;
@@ -40,6 +46,7 @@ class FingerprintController extends GetxController {
   FingerprintController(
     this._searchKaryawan,
     this._getUploadDownloadOpt,
+    this._getAdminOpt,
     this._getSettingOpt,
     this._getDtOpt,
     this._getBtstatsOptUseCase,
@@ -57,6 +64,7 @@ class FingerprintController extends GetxController {
   var opt1 = <String>[].obs;
   var timeOpt = <String>[].obs;
   var uploadDownloadList = <String>[].obs;
+  var adminDDOptList = <String>[].obs;
 
   ///
   /// Selected Option Variables
@@ -64,15 +72,13 @@ class FingerprintController extends GetxController {
   var selectedSettingId = 0.obs;
   var selectedOpt1 = ''.obs;
   var selectedUpDown1 = ''.obs;
+  var selectedAdmin = ''.obs;
   var selectedDate = ''.obs;
   var selectedTime = ''.obs;
-  var selectedtod = 'hh:ss'.obs;
-  var selectedDt = 'dd/MM/yyyy'.obs;
 
   ///
   /// Other Variables
-  TimeOfDay tod = TimeOfDay.now();
-  DateTime dt = DateTime.now();
+  final box = StorageService.instance;
 
   ///
   /// Boolean Variables
@@ -84,13 +90,18 @@ class FingerprintController extends GetxController {
   ///
   // Upload And Download Template
   var undselectedMenuIndex = 0.obs;
+  var admselectedMenuIndex = 0.obs;
+
+  /// Admin
+  // Controllers
+  var oldpinCtrl = TextEditingController();
+  var newpinCtrl = TextEditingController();
+  var confpinCtrl = TextEditingController();
 
   // Variabels
   var typeAheadController = TextEditingController()..text = "";
   var taDeleteCtrl = TextEditingController()..text = "";
   var authDialogCtrl = TextEditingController();
-  var pinCtrl = TextEditingController();
-  var pinArg = "";
   var authDialogArg = "";
   var selectedSN = ''.obs;
 
@@ -123,36 +134,24 @@ class FingerprintController extends GetxController {
         await insertTemplateLocal(authDialogArg);
         break;
       case 1:
+        await tambahAdminPrivilege();
         break;
       case 2:
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          Get.dialog(
-            Dialog(
-              insetPadding:
-                  EdgeInsets.symmetric(horizontal: 0.1.sw, vertical: 0.2.sh),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 24.h),
-                    Text("Mengirimkan data!.")
-                  ],
-                ),
-              ),
-            ),
-            barrierDismissible: false,
-          );
-        });
-        // Pantau kondisi isRegistered dan tutup dialog jika true
-        ever(doneProcess, (registered) async {
-          if (registered == true && Get.isDialogOpen == true) {
-            doneProcess.value = false;
-            Get.back(); // menutup dialog
-          }
-        });
         await sendTemplateToDevice();
+        break;
+    }
+  }
+
+  Future<void> adminOptSend(int index) async {
+    switch (index) {
+      case 0:
+        await gantiPIN();
+        break;
+      case 1:
+        await sendTemplateToDevice();
+        break;
+      case 2:
+        await adminHapusbyNik();
         break;
     }
   }
@@ -189,12 +188,8 @@ class FingerprintController extends GetxController {
   }
 
   Future<void> uploadTemplateToServer() async {
-    //! Ambil Data Dari Local by SN
+    log("Ambil Data Dari Local by SN");
     var res = await _getTemplateData.execute(selectedSN.value);
-    // for (var element in res) {
-    //   log(element.nama ?? "-");
-    // }
-    final box = StorageService.instance;
     if (res.isNotEmpty) {
       var bodyTemplate = res.map((el) => el.template ?? "").join(",");
       var bodySn = res.map((el) => el.sn ?? "").join(",");
@@ -206,24 +201,70 @@ class FingerprintController extends GetxController {
         "nik": bodyNik,
         "kebun": box.kebun
       };
-      //! Kirim Ke Server
-      var send = await _sendTemplateData.execute(body);
-      if (send.data['error'] != "false") {
+      log(box.expToken ?? "");
+      late DataState<dynamic> ret;
+      var exp = await isTokenExpired(box.expToken);
+      if (!exp) {
+        log("Token Not Expired Yet");
+        //! Kirim Ke Server
+        ret = await _sendTemplateData.execute(body);
+      } else {
+        log("Token Expired");
+        log("Trying to relog.");
+        final loginCtrl = Get.find<LoginController>();
+        await loginCtrl.onReLogin();
+        ret = await _sendTemplateData.execute(body);
+      }
+      if (ret.data["error"] == false) {
         doneProcess.value = true;
+        showSnackBar("Mengirim data berhasil!");
+      } else {
+        showSnackBar("Mengirim data gagal!");
       }
     }
   }
 
   Future<void> sendTemplateToDevice() async {
-    final btC = Get.find<BluetoothController>();
+    final btCtrl = Get.find<Bt14CtrlController>();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Get.dialog(
+        Dialog(
+          insetPadding:
+              EdgeInsets.symmetric(horizontal: 0.1.sw, vertical: 0.2.sh),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 24.h),
+                Text("Mengirimkan data!.")
+              ],
+            ),
+          ),
+        ),
+        barrierDismissible: false,
+      );
+    });
+
     var data = await _getTemplateData.execute(selectedSN.value);
     if (data.isNotEmpty) {
       log('Total Data: ${data.length}');
       for (var el in data) {
         log("Send Template with NIK : ${el.nik}");
-        // await btC.sendTemplByNik(el.nik ?? "", el.template ?? "");
+        await btCtrl.sendTemplByNik(el.nik ?? "", el.template ?? "");
       }
-      doneProcess.value = true;
+    } else {
+      log("❌ Tidak ada data template ditemukan");
+    }
+
+    // 🔹 Tunggu sampai proses selesai (isDone true)
+    await waitUntilDone(btCtrl.isDone);
+
+    if (Get.isDialogOpen == true) {
+      Get.back();
+      btCtrl.resetVariables();
     }
   }
 
@@ -238,39 +279,32 @@ class FingerprintController extends GetxController {
   // }
 
   Future<void> insertTemplateLocal(String args) async {
-    final btC = Get.find<BluetoothController>();
-    // await btC.getTemplateFromDevice(args);
+    final btCtrl = Get.find<Bt14CtrlController>();
 
-    // await _waitUntilDone(btC);
-    do {
-      // await _processBuffer();
-      await Future.delayed(
-          const Duration(milliseconds: 100)); // biar ga ngegas CPU
-      log("Isdone satus: ${btC.isDone.value}");
-    } while (!btC.isDone.value);
+    // Tunggu sampai template selesai diterima
+    await btCtrl.getTemplateFromDevice(args);
 
-    // if (!(btC.debounceTimer?.isActive ?? false)) {
-    dataTemplate = btC.listInsertTemplate;
-    log("Delete data finger by SN: ${dataTemplate.first['sn']}");
-    await _deleteTemplateUseCase.execute(dataTemplate.first['sn']);
-    btC.isDone.value = true;
+    // Ambil data template dari controller
+    dataTemplate = btCtrl.listInsertTemplate;
+
+    if (dataTemplate.isEmpty) {
+      log("❌ Tidak ada template diterima");
+      return;
+    }
+
+    // Hapus template lama
+    final sn = dataTemplate.first['sn'];
+    log("Delete data finger by SN: $sn");
+    await _deleteTemplateUseCase.execute(sn);
+
+    // Insert template baru
     log("Insert data to finger");
-    return await _insertTemplateUseCase.execute(dataTemplate);
-    // }
+    await _insertTemplateUseCase.execute(dataTemplate);
+
+    // Reset Variable
+    log("Reset variable");
+    return await btCtrl.resetVariables();
   }
-
-  // /// Helper: bikin Future yang selesai pas isDone true
-  // Future<void> _waitUntilDone(BluetoothController btC) {
-  //   final completer = Completer<void>();
-
-  //   ever(btC.isDone, (val) {
-  //     if (val == true && !completer.isCompleted) {
-  //       completer.complete();
-  //     }
-  //   });
-
-  //   return completer.future;
-  // }
 
   Future<void> getDropdownOptionList() async {
     uploadDownloadList.value =
@@ -278,6 +312,7 @@ class FingerprintController extends GetxController {
     optSetting.value = await _getSettingOpt.execute('setting');
     timeOpt.value = await _getDtOpt.execute('datetime');
     opt1.value = await _getBtstatsOptUseCase.execute('btconnection');
+    adminDDOptList.value = await _getAdminOpt.execute('admin');
   }
 
   Future<void> getSNList() async {
@@ -290,9 +325,8 @@ class FingerprintController extends GetxController {
     // }
   }
 
-  Future<void> tambahAdmin(String arg) async {
-    final btC = Get.find<BluetoothController>();
-    authDialogCtrl.clear();
+  Future<void> tambahAdminPrivilege() async {
+    final btCtrl = Get.find<Bt14CtrlController>();
     String access = "";
     for (var el in listAdminOpt) {
       if (el.selected.value) {
@@ -301,26 +335,42 @@ class FingerprintController extends GetxController {
         access = '${access}0';
       }
     }
-    // await btC.addAdmin(access, arg);
+    await btCtrl.addAdminPrivilages(access, authDialogArg);
+    await btCtrl.resetVariables();
+    authDialogCtrl.clear();
+    authDialogArg = "";
+  }
+
+  Future<void> adminHapusbyNik() async {
+    final btCtrl = Get.find<Bt14CtrlController>();
+    await btCtrl.regdelFinger(1);
+    authDialogCtrl.clear();
+    await btCtrl.resetVariables();
     authDialogArg = "";
   }
 
   Future<void> gantiPIN() async {
-    final btC = Get.find<BluetoothController>();
+    final btCtrl = Get.find<Bt14CtrlController>();
+    if (oldpinCtrl.text == confpinCtrl.text) {
+      await btCtrl.gantiPIN(newpinCtrl.text, authDialogArg);
+      await btCtrl.resetVariables();
+    } else {
+      Get.snackbar(
+        '',
+        "PIN Baru tidak sama",
+        titleText: const SizedBox.shrink(),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.black87,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+        margin: const EdgeInsets.all(12),
+      );
+    }
     authDialogCtrl.clear();
-    // await btC.gantiPIN(pinArg, authDialogArg);
-    pinCtrl.clear();
+    newpinCtrl.clear();
+    oldpinCtrl.clear();
+    confpinCtrl.clear();
     authDialogArg = "";
-    pinArg = "";
-  }
-
-  /// Syncronous Funtion List
-  void changeTod(TimeOfDay value) {
-    selectedtod.value = '${value.hour}:${value.minute}';
-  }
-
-  void changeDt(DateTime value) {
-    selectedDt.value = '${value.day}/${value.month}/${value.year}';
   }
 
   @override

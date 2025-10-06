@@ -18,7 +18,6 @@ class ExceptionHandler {
       case DioErrorType.cancel:
         return AppException('Request Cancelled');
       case DioErrorType.other:
-      default:
         return AppException('Unexpected error occurred');
     }
   }

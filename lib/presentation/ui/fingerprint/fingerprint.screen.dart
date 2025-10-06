@@ -18,7 +18,7 @@ class FingerprintScreen extends GetView<FingerprintController> {
       length: 6,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Pengaturan Fingerprint'),
+          title: Text('appbarFingerSetting'.tr),
           bottom: const TabBar(
             automaticIndicatorColorAdjustment: true,
             indicatorColor: Colors.black,

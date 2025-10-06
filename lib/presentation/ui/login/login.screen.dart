@@ -53,7 +53,7 @@ class LoginScreen extends GetView<LoginController> {
               ),
               SizedBox(height: 0.06.sh),
               Text(
-                'Nama Pengguna',
+                'username'.tr,
                 style: theme.labelMedium,
               ),
               SizedBox(height: 4.h),
@@ -71,7 +71,7 @@ class LoginScreen extends GetView<LoginController> {
               ),
               SizedBox(height: 16.h),
               Text(
-                'Sandi',
+                'password'.tr,
                 style: theme.labelMedium,
               ),
               SizedBox(height: 4.h),
@@ -180,7 +180,7 @@ class LoginScreen extends GetView<LoginController> {
                       }
                     },
                     child: Text(
-                      "Masuk",
+                      "signIn".tr,
                       style: theme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: ConstColor.gCultured,

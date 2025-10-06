@@ -1,10 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:get/get.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:owl_fp_newer/domain/entity/karyawan.entity.dart';
 
 import '../../../constant.dart';
+import '../../common/app.typeahead.dart';
 import '../controllers/bt.controller.dart';
 import '../controllers/fingerprint.controller.dart';
 
@@ -17,6 +19,7 @@ class AdminComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context).textTheme;
     var optCtrl = ScrollController();
+
     opendialog(int index) {
       return Get.dialog(
         Dialog(
@@ -27,9 +30,9 @@ class AdminComponent extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text("Otentikasi"),
+                Text("auth".tr),
                 SizedBox(height: 12.h),
-                const Text("Masukkan Password!."),
+                Text("inputPassword".tr),
                 SizedBox(height: 8.h),
                 TextField(
                   controller: controller.authDialogCtrl,
@@ -44,12 +47,11 @@ class AdminComponent extends StatelessWidget {
                   ),
                   onPressed: () {
                     Get.back();
-                    index == 1
-                        ? controller.tambahAdmin(controller.authDialogArg)
-                        : controller.gantiPIN();
+                    controller
+                        .adminOptSend(controller.admselectedMenuIndex.value);
                     // btctrl.devSend(controller.authDialogArg);
                   },
-                  child: const Text('Kirim'),
+                  child: Text('send'.tr),
                 ),
               ],
             ),
@@ -58,51 +60,113 @@ class AdminComponent extends StatelessWidget {
       );
     }
 
-    return Padding(
-      padding: ConstPadding.screenPadding,
-      child: ListView(
+    gantinPinWidget() {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text("Tambah Admin"),
-          const Divider(),
-          SizedBox(height: 12.h),
-          // Text("Pilih Menu"),
-          // SizedBox(height: 8.h),
-          TypeAheadField(
-            // builder untuk bikin TextField
-            builder: (context, controller, focusNode) {
-              return TextField(
-                controller: controller,
-                focusNode: focusNode,
-                decoration: InputDecoration(
-                  labelStyle: theme.labelLarge,
-                  labelText: 'Cari karyawan',
-                  border: const OutlineInputBorder(),
-                ),
-              );
+          Text(
+            "${"oldPin".tr}:",
+            style: theme.labelMedium,
+          ),
+          SizedBox(height: 8.h),
+          TextFormField(
+            onChanged: (value) {
+              controller.oldpinCtrl.text = value;
             },
-            // ambil data suggestion
+            controller: controller.oldpinCtrl,
+            // controller: controller.urlCtrl,
+            decoration: const InputDecoration(
+                hintText: '******',
+                hintStyle: TextStyle(
+                  fontStyle: FontStyle.italic,
+                )),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            "${"newPin".tr}:",
+            style: theme.labelMedium,
+          ),
+          SizedBox(height: 8.h),
+          TextFormField(
+            onChanged: (value) {
+              controller.newpinCtrl.text = value;
+            },
+            controller: controller.newpinCtrl,
+            // controller: controller.urlCtrl,
+            decoration: const InputDecoration(
+                hintText: '******',
+                hintStyle: TextStyle(
+                  fontStyle: FontStyle.italic,
+                )),
+          ),
+          SizedBox(height: 8.h),
+          Text(
+            "${"confirmPin".tr}:",
+            style: theme.labelMedium,
+          ),
+          SizedBox(height: 8.h),
+          TextFormField(
+            onChanged: (value) {
+              controller.confpinCtrl.text = value;
+            },
+            controller: controller.confpinCtrl,
+            // controller: controller.urlCtrl,
+            decoration: const InputDecoration(
+                hintText: '******',
+                hintStyle: TextStyle(
+                  fontStyle: FontStyle.italic,
+                )),
+          ),
+          SizedBox(height: 24.h),
+        ],
+      );
+    }
+
+    tambahAdmin() {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "${"chooseEmply".tr}:",
+            style: theme.labelMedium,
+          ),
+          SizedBox(height: 8.h),
+          AppTypeAheadField<KaryawanEntity>(
+            controller: controller.typeAheadController, // TextEditingController
+            // labelText: 'Cari karyawan',
+            hintText: 'findEmply'.tr,
+
+            // ✅ harus return List<Karyawan>
             suggestionsCallback: (pattern) async {
               return controller.karyawanlist.where((item) {
-                var name = item.namakaryawan ?? "Undefined";
+                final name = item.namakaryawan ?? "Undefined";
                 return name.toLowerCase().contains(pattern.toLowerCase());
               }).toList();
             },
-            // render suggestion item
-            itemBuilder: (context, suggestion) {
+
+            // render tiap item suggestion
+            itemBuilder: (context, KaryawanEntity suggestion) {
               return ListTile(
                 title: Text(suggestion.namakaryawan ?? ""),
               );
             },
-            // ketika suggestion dipilih
-            onSelected: (suggestion) {
+
+            // saat dipilih
+            onSuggestionSelected: (KaryawanEntity suggestion) {
               btctrl.selectedRegisterNm = suggestion.namakaryawan ?? "";
               btctrl.selectedRegisterNIK = suggestion.karyawanid ?? "";
               controller.typeAheadController.text =
                   suggestion.namakaryawan ?? "";
             },
+
+            // opsional: builder jika tidak ada hasil
+            noItemsFoundBuilder: (ctx) => Padding(
+              padding: EdgeInsets.all(8),
+              child: Text("${"notFound".tr}!"),
+            ),
           ),
           SizedBox(height: 12.h),
-          const Text("Tambah Hak Akses"),
+          Text("addPriv".tr),
           const Divider(),
           ListView.builder(
             controller: optCtrl,
@@ -112,7 +176,6 @@ class AdminComponent extends StatelessWidget {
               var data = controller.listAdminOpt[index];
               return Row(
                 children: [
-                  Text(data.value ?? "Undifined"),
                   Obx(
                     () => Checkbox(
                       value: data.selected.value, // selalu pakai .value
@@ -121,51 +184,125 @@ class AdminComponent extends StatelessWidget {
                       },
                     ),
                   ),
+                  Expanded(child: Text(data.value ?? "Undifined")),
                 ],
               );
             },
           ),
           SizedBox(height: 12.h),
+        ],
+      );
+    }
+
+    hapusbyNik() {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "${"chooseEmply".tr}:",
+            style: theme.labelMedium,
+          ),
+          SizedBox(height: 8.h),
+          AppTypeAheadField<KaryawanEntity>(
+            controller: controller.typeAheadController, // TextEditingController
+            // labelText: 'Cari karyawan',
+            hintText: 'findEmply'.tr,
+
+            // ✅ harus return List<Karyawan>
+            suggestionsCallback: (pattern) async {
+              return controller.karyawanlist.where((item) {
+                final name = item.namakaryawan ?? "Undefined";
+                return name.toLowerCase().contains(pattern.toLowerCase());
+              }).toList();
+            },
+
+            // render tiap item suggestion
+            itemBuilder: (context, KaryawanEntity suggestion) {
+              return ListTile(
+                title: Text(suggestion.namakaryawan ?? ""),
+              );
+            },
+
+            // saat dipilih
+            onSuggestionSelected: (KaryawanEntity suggestion) {
+              btctrl.selectedRegisterNm = suggestion.namakaryawan ?? "";
+              btctrl.selectedRegisterNIK = suggestion.karyawanid ?? "";
+              controller.typeAheadController.text =
+                  suggestion.namakaryawan ?? "";
+            },
+
+            // opsional: builder jika tidak ada hasil
+            noItemsFoundBuilder: (ctx) => Padding(
+              padding: EdgeInsets.all(8),
+              child: Text("${"notFound".tr}!"),
+            ),
+          ),
+          SizedBox(height: 24.h),
+        ],
+      );
+    }
+
+    return Padding(
+      padding: ConstPadding.screenPadding,
+      child: ListView(
+        children: [
+          Text(
+            "privilege".tr,
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const Divider(),
+          SizedBox(height: 12.h),
+          // Text("Pilih Menu"),
+          // SizedBox(height: 8.h),
+          Text("${"chsOpt".tr}:"),
+          SizedBox(height: 8.h),
+          DropdownButtonFormField<String>(
+            style: Theme.of(context).textTheme.labelMedium,
+            decoration: InputDecoration(
+              contentPadding: ConstPadding.ddBtnPadding,
+              border: const OutlineInputBorder(),
+            ),
+            value: controller.adminDDOptList.first,
+            items: controller.adminDDOptList
+                .map((option) => DropdownMenuItem(
+                      value: option,
+                      child: Text(
+                        option,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ))
+                .toList(),
+            onChanged: (value) {
+              controller.selectedAdmin.value = value ?? "";
+              controller.admselectedMenuIndex.value =
+                  controller.adminDDOptList.indexOf(value);
+              log('${controller.adminDDOptList.indexOf(value)}');
+            },
+            validator: (value) {
+              if (value == null) {
+                return 'plSlcOpt'.tr;
+              }
+              return null;
+            },
+          ),
+          SizedBox(height: 12.h),
+          Obx(
+            () => (controller.admselectedMenuIndex.value == 0)
+                ? gantinPinWidget()
+                : (controller.admselectedMenuIndex.value == 1)
+                    ? tambahAdmin()
+                    : hapusbyNik(),
+          ),
+
           ElevatedButton(
             onPressed: () {
               opendialog(1);
             },
-            child: const Text('Kirim'),
+            child: Text('send'.tr),
           ),
-          SizedBox(height: 12.h),
-          const Text("Ganti PIN"),
-          const Divider(),
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  onChanged: (value) {
-                    controller.pinArg = value;
-                  },
-                  controller: controller.pinCtrl,
-                  // controller: controller.urlCtrl,
-                  decoration: const InputDecoration(
-                      hintText: '******',
-                      hintStyle: TextStyle(
-                        fontStyle: FontStyle.italic,
-                      )),
-                ),
-              ),
-              IconButton(
-                onPressed: () {
-                  controller.pinCtrl.clear();
-                  // controller.saveUrl();
-                  opendialog(2);
-                },
-                icon: Icon(
-                  LucideIcons.save,
-                  color: ConstColor.gBlueGray,
-                  size: 20.h,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 0.1.sh),
         ],
       ),
     );

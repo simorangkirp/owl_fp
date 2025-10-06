@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -184,4 +186,18 @@ String extractErrorMessage(Object? error) {
 
   // 5) Default fallback
   return error.toString();
+}
+
+Future<void> waitUntilDone(RxBool flag,
+    {Duration timeout = const Duration(seconds: 15)}) async {
+  final start = DateTime.now();
+  await Future.doWhile(() async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    final elapsed = DateTime.now().difference(start);
+    if (elapsed > timeout) {
+      log("⚠️ Timeout menunggu flag done");
+      return false;
+    }
+    return !flag.value;
+  });
 }

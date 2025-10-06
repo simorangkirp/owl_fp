@@ -184,6 +184,8 @@ class LoginController extends GetxController {
 
   Future<void> onLogin() async {
     isSync.value = true;
+    storage.saveUsername(unCtrl.text);
+    storage.savePwd(pwCtrl.text);
 
     // final res = await _loginUseCase.execute(unCtrl.text, pwCtrl.text);
     await _loginUseCase.execute(unCtrl.text, pwCtrl.text);
@@ -204,15 +206,15 @@ class LoginController extends GetxController {
   }
 
   Future<void> onReLogin() async {
-    final res = await _loginUseCase.execute(
+    await _loginUseCase.execute(
       storage.username ?? "",
       storage.pwd ?? "",
     );
 
-    DialogHelper.handleApiResult(
-      res,
-      successMessage: "Login ulang berhasil!",
-    );
+    // DialogHelper.handleApiResult(
+    //   res,
+    //   successMessage: "Login ulang berhasil!",
+    // );
 
     isSync.value = true;
   }

@@ -1,5 +1,5 @@
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
-
 import '../../../../data/dal/services/get.storage.dart';
 
 class SplashController extends GetxController {
@@ -7,7 +7,9 @@ class SplashController extends GetxController {
   RxBool isLogin = false.obs;
 
   Future<void> validate() async {
-// Delay biar animasi splash keliatan
+    // kalau mau splash kelihatan sebentar tambahin delay
+    await Future.delayed(const Duration(seconds: 2));
+
     if (box.isLoggedIn) {
       Get.offAllNamed('/home');
       // Get.offAllNamed('/login');
@@ -17,7 +19,11 @@ class SplashController extends GetxController {
   }
 
   @override
-  Future<void> onInit() async {
+  void onInit() {
     super.onInit();
+    // tunggu sampai build pertama selesai, baru navigasi
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await validate();
+    });
   }
 }

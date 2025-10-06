@@ -32,7 +32,7 @@ class MasterdataScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Terakhir sinkron :',
+                        "${'lastSync'.tr}:",
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.w400,
                           fontSize: 14.sp,
@@ -56,7 +56,7 @@ class MasterdataScreen extends StatelessWidget {
                   child: InkWell(
                     onTap: () => controller.onSyncKaryawan(),
                     child: Text(
-                      "Sinkron",
+                      "sync".tr,
                       style: GoogleFonts.poppins(
                         fontWeight: FontWeight.bold,
                         fontSize: 14.sp,
@@ -109,7 +109,7 @@ class MasterdataScreen extends StatelessWidget {
                           ),
                           Row(
                             children: [
-                              Expanded(child: Text("Nama")),
+                              Expanded(child: Text("name".tr)),
                               Expanded(
                                 flex: 2,
                                 child: Text(
@@ -136,7 +136,7 @@ class MasterdataScreen extends StatelessWidget {
                           ),
                           Row(
                             children: [
-                              Expanded(child: Text("Unit")),
+                              Expanded(child: Text("unit".tr)),
                               Expanded(
                                   flex: 2,
                                   child: Text(
@@ -149,7 +149,7 @@ class MasterdataScreen extends StatelessWidget {
                           ),
                           Row(
                             children: [
-                              Expanded(child: Text("Divisi")),
+                              Expanded(child: Text("division".tr)),
                               Expanded(
                                   flex: 2,
                                   child: Text(
@@ -162,7 +162,7 @@ class MasterdataScreen extends StatelessWidget {
                           ),
                           Row(
                             children: [
-                              Expanded(child: Text("Jabatan")),
+                              Expanded(child: Text("position".tr)),
                               Expanded(
                                   flex: 2,
                                   child: Text(

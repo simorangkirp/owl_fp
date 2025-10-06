@@ -36,7 +36,11 @@ class AppTheme {
     ),
     scaffoldBackgroundColor: ConstColor.lCream,
     brightness: Brightness.light,
-    colorScheme: ColorScheme.fromSeed(seedColor: ConstColor.lBerBlue),
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: ConstColor.lBerBlue,
+      brightness: Brightness.light,
+      tertiary: ConstColor.lCream,
+    ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: ConstColor.gCultured,
@@ -110,13 +114,45 @@ class AppTheme {
   );
 
   static final dark = ThemeData(
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: ConstColor.dVerdigris, // warna latar
+        foregroundColor: ConstColor.gCultured, // warna teks/icon
+        padding: ConstPadding.eleBtnPadding,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        textStyle: GoogleFonts.poppins(
+          // fontWeight: FontWeight.bold,
+          fontSize: 14.sp,
+        ),
+      ),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: OutlinedButton.styleFrom(
+        backgroundColor: ConstColor.dVerdigris,
+        foregroundColor: ConstColor.dCharcoal, // warna teks/icon
+        side: BorderSide(color: ConstColor.dCharcoal, width: 1.5.w),
+        padding: ConstPadding.eleBtnPadding,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        textStyle: GoogleFonts.poppins(
+          // fontWeight: FontWeight.w600,
+          fontSize: 14.sp,
+        ),
+      ),
+    ),
     scaffoldBackgroundColor: ConstColor.dCharcoal,
     brightness: Brightness.dark,
     colorScheme: ColorScheme.fromSeed(
-        seedColor: ConstColor.dPlatinum, brightness: Brightness.dark),
+      seedColor: ConstColor.dPlatinum,
+      brightness: Brightness.dark,
+      tertiary: ConstColor.dRichblack,
+    ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: ConstColor.gCultured,
+      fillColor: ConstColor.dRichblack,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.w)),
       enabledBorder: OutlineInputBorder(
           borderSide: BorderSide(color: ConstColor.dPlatinum)),
@@ -124,6 +160,17 @@ class AppTheme {
           borderSide: BorderSide(color: ConstColor.dVerdigris, width: 2.w)),
       labelStyle: GoogleFonts.poppins(fontSize: 10.sp),
       contentPadding: ConstPadding.ddBtnPadding,
+    ),
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      backgroundColor: ConstColor.dRichblack,
+      selectedItemColor: ConstColor.dPlatinum,
+      unselectedItemColor: Colors.grey,
+      selectedIconTheme: IconThemeData(size: 24.h),
+      unselectedIconTheme: IconThemeData(size: 20.h),
+      selectedLabelStyle: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+      unselectedLabelStyle: GoogleFonts.poppins(fontWeight: FontWeight.normal),
+      elevation: 8,
+      type: BottomNavigationBarType.fixed,
     ),
     textTheme: TextTheme(
       displayLarge: GoogleFonts.poppins(),

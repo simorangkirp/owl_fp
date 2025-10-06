@@ -2,10 +2,10 @@ import 'package:owl_fp_newer/domain/entity/auth.entity.dart';
 
 class LoginModel extends LoginEntty {
   LoginModel({
-    required String id,
-    required String name,
-    required String token,
-  }) : super(id: id, name: name, token: token);
+    required super.id,
+    required super.name,
+    required super.token,
+  });
 
   factory LoginModel.fromJson(Map<String, dynamic> json) {
     return LoginModel(

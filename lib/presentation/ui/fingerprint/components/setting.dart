@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:owl_fp_newer/presentation/ui/common/container.ext.dart';
-import 'package:owl_fp_newer/presentation/ui/fingerprint/controllers/bt.controller.dart';
 
 import '../../../constant.dart';
+import '../controllers/bt14_ctrl_controller.dart';
 import '../controllers/fingerprint.controller.dart';
 
 class SettingComponents extends StatelessWidget {
   SettingComponents({super.key});
   final controller = Get.find<FingerprintController>();
-  final btctrl = Get.find<BluetoothController>();
+  final btctrl = Get.find<Bt14CtrlController>();
 
   @override
   Widget build(BuildContext context) {
-    opendialog() {
+    opendialog(int index) {
       return Get.dialog(
         Dialog(
           insetPadding:
@@ -24,9 +25,9 @@ class SettingComponents extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text("Otentikasi"),
+                Text("auth".tr),
                 SizedBox(height: 12.h),
-                const Text("Masukkan Password!."),
+                Text("inputPassword".tr),
                 SizedBox(height: 8.h),
                 TextField(
                   controller: controller.authDialogCtrl,
@@ -42,10 +43,10 @@ class SettingComponents extends StatelessWidget {
                   onPressed: () {
                     controller.authDialogCtrl.clear();
                     Get.back();
-                    // btctrl.send(controller.authDialogArg,
-                    //     controller.selectedSettingId.value);
+                    btctrl.settings(controller.authDialogArg,
+                        controller.selectedSettingId.value);
                   },
-                  child: const Text('Kirim'),
+                  child: Text('send'.tr),
                 ),
               ],
             ),
@@ -58,16 +59,16 @@ class SettingComponents extends StatelessWidget {
       return Column(
         children: [
           TextField(
-            controller: btctrl.ssid,
+            controller: btctrl.ssidNm,
             decoration: const InputDecoration(
               hintText: 'SSID',
             ),
           ),
           SizedBox(height: 8.h),
           TextField(
-            controller: btctrl.wPwd,
-            decoration: const InputDecoration(
-              hintText: 'Password',
+            controller: btctrl.ssidPw,
+            decoration: InputDecoration(
+              hintText: 'password'.tr,
             ),
           ),
           SizedBox(height: 12.h),
@@ -76,9 +77,9 @@ class SettingComponents extends StatelessWidget {
               fixedSize: Size(double.maxFinite, 42.h),
             ),
             onPressed: () {
-              opendialog();
+              opendialog(0);
             },
-            child: const Text('Kirim'),
+            child: Text('send'.tr),
           ),
         ],
       );
@@ -89,17 +90,17 @@ class SettingComponents extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text("Pilih Tanggal"),
+          Text("chsHour".tr),
           SizedBox(height: 8.h),
           InkWell(
             onTap: () async {
               final TimeOfDay? timeOfDay = await showTimePicker(
                 context: context,
-                initialTime: controller.tod,
+                initialTime: btctrl.tod,
                 initialEntryMode: TimePickerEntryMode.dial,
               );
               if (timeOfDay != null) {
-                controller.changeTod(timeOfDay);
+                btctrl.changeTod(timeOfDay);
               }
             },
             child: Obx(
@@ -108,24 +109,24 @@ class SettingComponents extends StatelessWidget {
                 padding: context.outlinedButtonPadding,
                 decoration: context.outlinedButtonBox,
                 child: Text(
-                  controller.selectedtod.value,
+                  btctrl.selectedtod.value,
                   style: TextStyle(fontSize: 14.sp),
                 ),
               ),
             ),
           ),
           SizedBox(height: 12.h),
-          const Text("Pilih Jam"),
+          Text("chsDt".tr),
           SizedBox(height: 8.h),
           InkWell(
             onTap: () async {
               final DateTime? date = await showDatePicker(
                   context: context,
-                  initialDate: controller.dt,
+                  initialDate: btctrl.dt,
                   firstDate: DateTime(1999),
                   lastDate: DateTime(2100));
               if (date != null) {
-                controller.changeDt(date);
+                btctrl.changeDt(date);
               }
             },
             child: Obx(
@@ -134,15 +135,10 @@ class SettingComponents extends StatelessWidget {
                 padding: context.outlinedButtonPadding,
                 decoration: context.outlinedButtonBox,
                 child: Text(
-                  controller.selectedDt.value,
+                  btctrl.selectedDt.value,
                   style: TextStyle(fontSize: 14.sp),
                 ),
               ),
-              // Container(
-              //   decoration: BoxDecoration(),
-              //   padding: EdgeInsets.all(12.w),
-              //   child: Text(controller.selectedDt.value),
-              // ),
             ),
           ),
           SizedBox(height: 12.h),
@@ -150,8 +146,10 @@ class SettingComponents extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               fixedSize: Size(double.maxFinite, 42.h),
             ),
-            onPressed: () {},
-            child: const Text('Kirim'),
+            onPressed: () {
+              opendialog(4);
+            },
+            child: Text('send'.tr),
           ),
         ],
       );
@@ -164,7 +162,7 @@ class SettingComponents extends StatelessWidget {
             children: [
               Expanded(
                   child: TextField(
-                controller: btctrl.wdTCtrl,
+                controller: btctrl.waktuDeleteCtrl,
               )),
               SizedBox(width: 24.w),
               Expanded(
@@ -185,7 +183,7 @@ class SettingComponents extends StatelessWidget {
                     },
                     validator: (value) {
                       if (value == null) {
-                        return 'Please select an option';
+                        return 'plSlcOpt'.tr;
                       }
                       return null;
                     },
@@ -200,7 +198,7 @@ class SettingComponents extends StatelessWidget {
               fixedSize: Size(double.maxFinite, 42.h),
             ),
             onPressed: () {},
-            child: const Text('Kirim'),
+            child: Text('send'.tr),
           ),
         ],
       );
@@ -216,7 +214,7 @@ class SettingComponents extends StatelessWidget {
               fixedSize: Size(double.maxFinite, 42.h),
             ),
             onPressed: () {},
-            child: const Text('Kirim'),
+            child: Text('send'.tr),
           ),
         ],
       );
@@ -226,7 +224,7 @@ class SettingComponents extends StatelessWidget {
       return Column(
         children: [
           TextField(
-            controller: btctrl.uriTCtrl,
+            controller: btctrl.alamatServerCtrl,
           ),
           SizedBox(height: 12.h),
           ElevatedButton(
@@ -234,9 +232,9 @@ class SettingComponents extends StatelessWidget {
               fixedSize: Size(double.maxFinite, 42.h),
             ),
             onPressed: () {
-              opendialog();
+              opendialog(3);
             },
-            child: const Text('Kirim'),
+            child: Text('send'.tr),
           ),
         ],
       );
@@ -249,10 +247,14 @@ class SettingComponents extends StatelessWidget {
             children: [
               Expanded(
                   child: TextField(
-                controller: btctrl.wUpload,
+                controller: btctrl.waktuUploadCtrl,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly, // Hanya angka 0-9
+                ],
               )),
               SizedBox(width: 12.w),
-              const Text("menit"),
+              Text("minute".tr),
             ],
           ),
           SizedBox(height: 12.h),
@@ -261,9 +263,9 @@ class SettingComponents extends StatelessWidget {
               fixedSize: Size(double.maxFinite, 42.h),
             ),
             onPressed: () {
-              opendialog();
+              opendialog(1);
             },
-            child: const Text('Kirim'),
+            child: Text('send'.tr),
           ),
         ],
       );
@@ -273,7 +275,7 @@ class SettingComponents extends StatelessWidget {
       return Column(
         children: [
           TextField(
-            controller: btctrl.csTCtrl,
+            controller: btctrl.clientIDCtrl,
             decoration: const InputDecoration(
               hintText: 'Client Secret',
             ),
@@ -284,9 +286,9 @@ class SettingComponents extends StatelessWidget {
               fixedSize: Size(double.maxFinite, 42.h),
             ),
             onPressed: () {
-              opendialog();
+              opendialog(2);
             },
-            child: const Text('Kirim'),
+            child: Text('send'.tr),
           ),
         ],
       );
@@ -296,10 +298,16 @@ class SettingComponents extends StatelessWidget {
       padding: ConstPadding.screenPadding,
       child: ListView(
         children: [
-          Text("Setting"),
+          Text(
+            "setting".tr,
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.w600),
+          ),
           Divider(),
           SizedBox(height: 12.h),
-          Text("Pilih Menu"),
+          Text("chsOpt".tr),
           SizedBox(height: 8.h),
           Obx(
             () => DropdownButtonFormField<String>(
@@ -322,7 +330,7 @@ class SettingComponents extends StatelessWidget {
               },
               validator: (value) {
                 if (value == null) {
-                  return 'Please select an option';
+                  return 'plSlcOpt'.tr;
                 }
                 return null;
               },

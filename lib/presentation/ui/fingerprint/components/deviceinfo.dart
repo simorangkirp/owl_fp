@@ -5,12 +5,12 @@ import 'package:lucide_icons/lucide_icons.dart';
 import 'package:owl_fp_newer/presentation/ui/common/expandable.widget.dart';
 
 import '../../../constant.dart';
-import '../controllers/bt.controller.dart';
+import '../controllers/bt14_ctrl_controller.dart';
 import '../controllers/fingerprint.controller.dart';
 
 class DeviceInfoComponent extends StatelessWidget {
   DeviceInfoComponent({super.key});
-  final btctrl = Get.find<BluetoothController>();
+  final btctrl = Get.find<Bt14CtrlController>();
   final controller = Get.find<FingerprintController>();
 
   @override
@@ -29,9 +29,9 @@ class DeviceInfoComponent extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text("Otentikasi"),
+                Text("auth".tr),
                 SizedBox(height: 12.h),
-                const Text("Masukkan Password!."),
+                Text("inputPassword".tr),
                 SizedBox(height: 8.h),
                 TextField(
                   controller: controller.authDialogCtrl,
@@ -51,7 +51,7 @@ class DeviceInfoComponent extends StatelessWidget {
                       // btctrl.resetFactory(controller.authDialogArg);
                     }
                   },
-                  child: const Text('Kirim'),
+                  child: Text('send'.tr),
                 ),
               ],
             ),
@@ -73,7 +73,7 @@ class DeviceInfoComponent extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Reset Aplikasi Mobile",
+                  "resetMobileApp".tr,
                   style: theme.textTheme.labelLarge!
                       .copyWith(fontWeight: FontWeight.w600),
                 ),
@@ -93,17 +93,18 @@ class DeviceInfoComponent extends StatelessWidget {
                       Icon(
                         LucideIcons.fingerprint,
                         size: 48.h,
-                        color: Colors.black.withOpacity(0.6),
+                        // color: Colors.black.withAlpha((0.6 * 255).toInt()),
+                        color: ConstColor.gTurquoise,
                       ),
                       SizedBox(height: 8.h),
                       Text(
-                        "Reset log absen akan menghapus seluruh\ndata absen di device fingerprint.",
+                        "resetMobileDialog".tr,
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 12.h),
                       ElevatedButton(
                         onPressed: () {},
-                        child: Text('Kirim'),
+                        child: Text('send'.tr),
                       ),
                     ],
                   ),
@@ -124,7 +125,7 @@ class DeviceInfoComponent extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Reset Fingerprint",
+                  "resetFinger".tr,
                   style: theme.textTheme.labelLarge!
                       .copyWith(fontWeight: FontWeight.w600),
                 ),
@@ -144,11 +145,12 @@ class DeviceInfoComponent extends StatelessWidget {
                       Icon(
                         LucideIcons.cpu,
                         size: 48.h,
-                        color: Colors.black.withOpacity(0.6),
+                        // color: Colors.black.withAlpha((0.6 * 255).toInt()),
+                        color: ConstColor.gTurquoise,
                       ),
                       SizedBox(height: 8.h),
                       Text(
-                        "Reset device akan menghapus seluruh data\ndan pengaturan device.\nAksi ini tidak dapat di batalkan.",
+                        "resetFingerDialog".tr,
                         textAlign: TextAlign.center,
                       ),
                       SizedBox(height: 12.h),
@@ -156,7 +158,7 @@ class DeviceInfoComponent extends StatelessWidget {
                         onPressed: () {
                           opendialog(1);
                         },
-                        child: Text('Kirim'),
+                        child: Text('send'.tr),
                       ),
                     ],
                   ),
@@ -171,7 +173,7 @@ class DeviceInfoComponent extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            "Download Firmware",
+            "downFirm".tr,
             style: theme.textTheme.labelLarge!
                 .copyWith(fontWeight: FontWeight.w600),
           ),
@@ -195,7 +197,7 @@ class DeviceInfoComponent extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Kirim Template ke Server",
+                  "sendTemptoServer".tr,
                   style: theme.textTheme.labelLarge!
                       .copyWith(fontWeight: FontWeight.w600),
                 ),
@@ -212,11 +214,12 @@ class DeviceInfoComponent extends StatelessWidget {
                   Icon(
                     LucideIcons.uploadCloud,
                     size: 48.h,
-                    color: Colors.black.withOpacity(0.6),
+                    // color: Colors.black.withAlpha((0.6 * 255).toInt()),
+                    color: ConstColor.gTurquoise,
                   ),
                   SizedBox(height: 8.h),
                   Text(
-                    "Aksi ini akan mengirim seluruh data\ntemplate yang ada di aplikasi ke Server.",
+                    "sendTemptoServerDialog".tr,
                     textAlign: TextAlign.center,
                   ),
                   SizedBox(height: 12.h),
@@ -247,7 +250,7 @@ class DeviceInfoComponent extends StatelessWidget {
                           },
                           validator: (value) {
                             if (value == null) {
-                              return 'Please select an option';
+                              return 'plSlcOpt'.tr;
                             }
                             return null;
                           },
@@ -258,7 +261,7 @@ class DeviceInfoComponent extends StatelessWidget {
                         onPressed: () {
                           controller.uploadTempToServerDialog();
                         },
-                        child: Text('Kirim'),
+                        child: Text('send'.tr),
                       ),
                     ],
                   ),
@@ -278,25 +281,25 @@ class DeviceInfoComponent extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "ID Mesin",
+                  "idMachine".tr,
                   style: theme.textTheme.labelLarge!
                       .copyWith(fontWeight: FontWeight.w600),
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  "Nama Produk",
+                  "productNm".tr,
                   style: theme.textTheme.labelLarge!
                       .copyWith(fontWeight: FontWeight.w600),
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  "Versi Software",
+                  "softwareVer".tr,
                   style: theme.textTheme.labelLarge!
                       .copyWith(fontWeight: FontWeight.w600),
                 ),
                 SizedBox(height: 4.h),
                 Text(
-                  "Alamat MAC",
+                  "macAdr".tr,
                   style: theme.textTheme.labelLarge!
                       .copyWith(fontWeight: FontWeight.w600),
                 ),
@@ -315,49 +318,49 @@ class DeviceInfoComponent extends StatelessWidget {
               ],
             ),
           ),
-          // Expanded(
-          //   child: Column(
-          //     crossAxisAlignment: CrossAxisAlignment.end,
-          //     children: [
-          //       Text(
-          //         btctrl.deviceInfo?['sn'] ?? "-",
-          //         style: theme.textTheme.labelLarge!
-          //             .copyWith(fontWeight: FontWeight.w400),
-          //       ),
-          //       SizedBox(height: 4.h),
-          //       Text(
-          //         btctrl.deviceInfo?['name'] ?? "-",
-          //         style: theme.textTheme.labelLarge!
-          //             .copyWith(fontWeight: FontWeight.w400),
-          //       ),
-          //       SizedBox(height: 4.h),
-          //       Text(
-          //         btctrl.deviceInfo?['firmware'] ?? "-",
-          //         style: theme.textTheme.labelLarge!
-          //             .copyWith(fontWeight: FontWeight.w400),
-          //       ),
-          //       SizedBox(height: 4.h),
-          //       Text(
-          //         btctrl.deviceInfo?['mac'] ?? "-",
-          //         style: theme.textTheme.labelLarge!
-          //             .copyWith(fontWeight: FontWeight.w400),
-          //       ),
-          //       SizedBox(height: 4.h),
-          //       Text(
-          //         btctrl.deviceInfo?['hardware'] ?? "-",
-          //         style: theme.textTheme.labelLarge!
-          //             .copyWith(fontWeight: FontWeight.w400),
-          //       ),
-          //       SizedBox(height: 4.h),
-          //       Text(
-          //         btctrl.deviceInfo?['firmware'] ?? "-",
-          //         style: theme.textTheme.labelLarge!
-          //             .copyWith(fontWeight: FontWeight.w400),
-          //       ),
-          //       SizedBox(height: 4.h),
-          //     ],
-          //   ),
-          // ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  btctrl.deviceInfo?['sn'] ?? "-",
+                  style: theme.textTheme.labelLarge!
+                      .copyWith(fontWeight: FontWeight.w400),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  btctrl.deviceInfo?['name'] ?? "-",
+                  style: theme.textTheme.labelLarge!
+                      .copyWith(fontWeight: FontWeight.w400),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  btctrl.deviceInfo?['firmware'] ?? "-",
+                  style: theme.textTheme.labelLarge!
+                      .copyWith(fontWeight: FontWeight.w400),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  btctrl.deviceInfo?['mac'] ?? "-",
+                  style: theme.textTheme.labelLarge!
+                      .copyWith(fontWeight: FontWeight.w400),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  btctrl.deviceInfo?['hardware'] ?? "-",
+                  style: theme.textTheme.labelLarge!
+                      .copyWith(fontWeight: FontWeight.w400),
+                ),
+                SizedBox(height: 4.h),
+                Text(
+                  btctrl.deviceInfo?['firmware'] ?? "-",
+                  style: theme.textTheme.labelLarge!
+                      .copyWith(fontWeight: FontWeight.w400),
+                ),
+                SizedBox(height: 4.h),
+              ],
+            ),
+          ),
         ],
       );
     }
@@ -366,7 +369,13 @@ class DeviceInfoComponent extends StatelessWidget {
       padding: ConstPadding.screenPadding,
       child: ListView(
         children: [
-          Text("Informasi Perangkat"),
+          Text(
+            "deviceInfo".tr,
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.w600),
+          ),
           Divider(),
           SizedBox(height: 12.h),
           deviceInfo(),

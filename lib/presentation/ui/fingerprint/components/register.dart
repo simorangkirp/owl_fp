@@ -1,139 +1,67 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:get/get.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
 import '../../../constant.dart';
-import '../controllers/bt.controller.dart';
+import '../controllers/bt14_ctrl_controller.dart';
 import '../controllers/fingerprint.controller.dart';
 
 class RegisterComponent extends StatelessWidget {
   RegisterComponent({super.key});
-  final btctrl = Get.find<BluetoothController>();
+  final btctrl = Get.find<Bt14CtrlController>();
   final controller = Get.find<FingerprintController>();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).textTheme;
+    final indicator = Theme.of(context).tabBarTheme.indicator;
+    Color borderColor = Colors.blue; // fallback
+
+    if (indicator is UnderlineTabIndicator) {
+      borderColor = indicator.borderSide.color;
+    }
 
     opendialog(int index) {
-      return Get.dialog(
-        Scaffold(
-          resizeToAvoidBottomInset: false,
-          body: Dialog(
-            insetPadding:
-                EdgeInsets.symmetric(horizontal: 0.1.sw, vertical: 0.2.sh),
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text("Otentikasi"),
-                  SizedBox(height: 12.h),
-                  const Text("Masukkan Password!."),
-                  SizedBox(height: 8.h),
-                  TextField(
-                    controller: btctrl.authCtrl,
-                    onChanged: (value) {
-                      btctrl.authText = value;
-                    },
+      return Get.bottomSheet(
+        Container(
+          margin: EdgeInsets.symmetric(vertical: 0.1.sh, horizontal: 0.1.sw),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            color: Theme.of(context).scaffoldBackgroundColor,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text("auth".tr),
+                SizedBox(height: 12.h),
+                Text("inputPassword".tr),
+                SizedBox(height: 8.h),
+                TextField(
+                  controller: btctrl.authCtrl,
+                  onChanged: (value) {
+                    btctrl.authText = value;
+                  },
+                ),
+                SizedBox(height: 12.h),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    fixedSize: Size(double.maxFinite, 42.h),
                   ),
-                  SizedBox(height: 12.h),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      fixedSize: Size(double.maxFinite, 42.h),
-                    ),
-                    onPressed: () async {
-                      btctrl.authCtrl.clear();
-                      Get.back();
-                      // index == 0
-                      //     ? await btctrl.sendRegist()
-                      //     : await btctrl.deleteByNik();
-                    },
-                    child: const Text('Kirim'),
-                  ),
-                ],
-              ),
+                  onPressed: () async {
+                    Get.back();
+                    await btctrl.regdelFinger(index);
+                  },
+                  child: Text('send'.tr),
+                ),
+              ],
             ),
           ),
         ),
-      );
-    }
-
-    deleteByNikWidget() {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text("Hapus data fingerprint dari NIK"),
-          Divider(),
-          SizedBox(height: 12.h),
-          TypeAheadField(
-            // builder untuk bikin TextField
-            builder: (context, textController, focusNode) {
-              return TextField(
-                controller:
-                    controller.taDeleteCtrl, // pakai controller kamu sendiri
-                focusNode: focusNode,
-                decoration: InputDecoration(
-                  labelStyle: theme.labelLarge,
-                  labelText: 'Cari karyawan',
-                  border: const OutlineInputBorder(),
-                ),
-              );
-            },
-            // ambil data suggestion
-            suggestionsCallback: (pattern) async {
-              return controller.karyawanlist.where((item) {
-                var name = item.namakaryawan ?? "Undefined";
-                return name.toLowerCase().contains(pattern.toLowerCase());
-              }).toList();
-            },
-            // render suggestion item
-            itemBuilder: (context, suggestion) {
-              return ListTile(
-                title: Text(suggestion.namakaryawan ?? ""),
-              );
-            },
-            // ketika suggestion dipilih
-            onSelected: (suggestion) {
-              btctrl.selectedDeleteNm = suggestion.namakaryawan ?? "";
-              btctrl.selectedDeleteNIK = suggestion.nik ?? "";
-              controller.taDeleteCtrl.text = suggestion.namakaryawan ?? "";
-            },
-          ),
-          SizedBox(height: 12.h),
-          DropdownButtonFormField<String>(
-            style: Theme.of(context).textTheme.labelMedium,
-            decoration: InputDecoration(
-              contentPadding: ConstPadding.ddBtnPadding,
-              border: const OutlineInputBorder(),
-            ),
-            // value: ctrl.listSN.first,
-            value: null,
-            items: controller.listSN
-                .map((option) => DropdownMenuItem(
-                      value: option,
-                      child: Text(
-                        option,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ))
-                .toList(),
-            onChanged: (value) {
-              controller.selectedSN.value = value ?? "";
-              // ctrl.undselectedMenuIndex.value = ctrl.listSN.indexOf(value);
-              // log('${ctrl.listSN.indexOf(value)}');
-            },
-            validator: (value) {
-              if (value == null) {
-                return 'Please select an option';
-              }
-              return null;
-            },
-          ),
-        ],
+        isScrollControlled: true, // 👈 biar naik waktu keyboard muncul
       );
     }
 
@@ -141,7 +69,13 @@ class RegisterComponent extends StatelessWidget {
       padding: ConstPadding.screenPadding,
       child: ListView(
         children: [
-          Text("Registrasi Fingerprint"),
+          Text(
+            "rndFinger".tr,
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.w600),
+          ),
           Divider(),
           SizedBox(height: 12.h),
           // Text("Pilih Karyawan:"),
@@ -154,7 +88,7 @@ class RegisterComponent extends StatelessWidget {
                 focusNode: focusNode,
                 decoration: InputDecoration(
                   labelStyle: theme.labelLarge,
-                  labelText: 'Cari karyawan',
+                  labelText: 'findEmply'.tr,
                   border: const OutlineInputBorder(),
                 ),
               );
@@ -198,14 +132,58 @@ class RegisterComponent extends StatelessWidget {
             ),
           ),
           SizedBox(height: 12.h),
-          ElevatedButton(
-            onPressed: () {
-              opendialog(0);
-            },
-            child: Text('Kirim'),
+          Row(
+            children: [
+              ElevatedButton(
+                onPressed: () {
+                  opendialog(0);
+                },
+                child: IntrinsicHeight(
+                  child: Row(
+                    children: [
+                      Icon(
+                        LucideIcons.userPlus2,
+                        color: Colors.white,
+                        size: 18.sp,
+                      ),
+                      VerticalDivider(
+                        color: Colors.white,
+                        thickness: 1.w,
+                      ),
+                      // SizedBox(width: 8.w),
+                      Text('register'.tr),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(width: 8.w),
+              ElevatedButton(
+                onPressed: () {
+                  opendialog(1);
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: borderColor),
+                child: IntrinsicHeight(
+                  child: Row(
+                    children: [
+                      Icon(
+                        LucideIcons.trash2,
+                        color: Colors.white,
+                        size: 18.sp,
+                      ),
+                      VerticalDivider(
+                        color: Colors.white,
+                        thickness: 1.w,
+                      ),
+                      // SizedBox(width: 8.w),
+                      Text('delete'.tr),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-          SizedBox(height: 12.h),
-          deleteByNikWidget(),
+          // SizedBox(height: 12.h),
+          // deleteByNikWidget(),
         ],
       ),
     );

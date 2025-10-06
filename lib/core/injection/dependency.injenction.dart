@@ -37,6 +37,8 @@ import '../../presentation/theme/controller.dart';
 import '../../data/dal/services/get.storage.dart';
 import 'package:owl_fp_newer/core/services/permission.service.dart';
 
+import '../../presentation/ui/profile/controllers/setting.controller.dart';
+
 class DependecyInjection {
   static Future<void> init() async {
     Get.put(StorageService.instance);
@@ -140,5 +142,9 @@ class DependecyInjection {
     ));
     Get.put(LoginController(Get.find<LoginUseCase>(),
         Get.find<ProfileUseCase>(), Get.find<OnLoginMasterData>()));
+    Get.put<SettingController>(
+      SettingController(storage: Get.find<StorageService>()),
+      permanent: true, // supaya gak ke-dispose
+    );
   }
 }

@@ -38,6 +38,7 @@ class AuthRepositoryImpl implements AuthRepository {
           box.saveToken(result['api_key']);
           box.saveKebun(result['kodeorg']);
           box.saveExpKey(result['explogin']);
+          box.saveIsLoggedIn(true);
 
           log("Login success. Token expiry: ${result['explogin']}");
 

@@ -107,31 +107,49 @@ class FlutterBluetoothClassicPlugin: FlutterPlugin, MethodChannel.MethodCallHand
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
-            "getPairedDevices" -> result.success(getPairedDevices())
-            "startDiscovery" -> { startDiscovery(); result.success(true) }
-            "stopDiscovery" -> { stopDiscovery(); result.success(true) }
+            "getPairedDevices" -> {
+                result.success(getPairedDevices())
+            }
+            "startDiscovery" -> {
+                startDiscovery()
+                result.success(true)
+            }
+            "stopDiscovery" -> {
+                stopDiscovery()
+                result.success(true)
+            }
             "connectInsecure" -> {
                 val address = call.argument<String>("address")
-                if (address == null) result.error("NO_ADDR", "address is null", null)
-                else thread {
-                    val ok = connectInsecure(address)
-                    mainHandler.post {
-                        result.success(ok)
-                        if (ok) connectionSink?.success("connected:$address")
-                        else connectionSink?.success("failed:$address")
+                if (address == null) {
+                    result.error("NO_ADDR", "address is null", null)
+                } else {
+                    thread {
+                        val ok = connectInsecure(address)
+                        // deliver result on main thread
+                        mainHandler.post {
+                            result.success(ok)
+                            if (ok) connectionSink?.success("connected:$address")
+                            else connectionSink?.success("failed:$address")
+                        }
                     }
                 }
             }
             "disconnect" -> {
-                disconnectInternal()
-                mainHandler.post {
-                    result.success(true)
-                    connectionSink?.success("disconnected")
+                thread {
+                    disconnectInternal()
+                    mainHandler.post {
+                        result.success(true)
+                        connectionSink?.success("disconnected")
+                    }
                 }
             }
             "write" -> {
                 val data = call.argument<String>("data") ?: ""
-                result.success(writeToDevice(data))
+                // perform write on background thread to avoid blocking
+                thread {
+                    val ok = writeToDevice(data)
+                    mainHandler.post { result.success(ok) }
+                }
             }
             "isBluetoothSupported" -> result.success(adapter != null)
             "isBluetoothEnabled" -> result.success(adapter?.isEnabled == true)
@@ -142,7 +160,8 @@ class FlutterBluetoothClassicPlugin: FlutterPlugin, MethodChannel.MethodCallHand
     private fun getPairedDevices(): List<Map<String, String>> {
         val out = mutableListOf<Map<String, String>>()
         val ad = adapter ?: return out
-        ad.bondedDevices?.forEach { d ->
+        val paired = ad.bondedDevices
+        paired?.forEach { d ->
             out.add(mapOf("name" to (d.name ?: ""), "address" to (d.address ?: "")))
         }
         return out
@@ -170,7 +189,10 @@ class FlutterBluetoothClassicPlugin: FlutterPlugin, MethodChannel.MethodCallHand
                             mainHandler.post { discoverySink?.success(map) }
                         }
                     } else if (action == BluetoothAdapter.ACTION_DISCOVERY_FINISHED) {
-                        mainHandler.post { discoverySink?.endOfStream() }
+                        mainHandler.post { 
+                            // discovery finished -> signal end of discovery (one-shot)
+                            discoverySink?.endOfStream()
+                        }
                     }
                 }
             }
@@ -203,6 +225,7 @@ class FlutterBluetoothClassicPlugin: FlutterPlugin, MethodChannel.MethodCallHand
             val device = ad.getRemoteDevice(address)
             if (ad.isDiscovering) ad.cancelDiscovery()
 
+            // ensure we start from clean state
             disconnectInternal()
 
             var sock: BluetoothSocket? = null
@@ -210,8 +233,9 @@ class FlutterBluetoothClassicPlugin: FlutterPlugin, MethodChannel.MethodCallHand
                 sock = device.createInsecureRfcommSocketToServiceRecord(SPP_UUID)
                 sock.connect()
             } catch (e: IOException) {
-                Log.w(TAG, "connectInsecure failed: ${e.message}")
+                Log.w(TAG, "connectInsecure failed first attempt: ${e.message}")
                 try { sock?.close() } catch (_: Exception) {}
+                // try again with fallback
                 sock = device.createRfcommSocketToServiceRecord(SPP_UUID)
                 sock.connect()
             }
@@ -223,6 +247,7 @@ class FlutterBluetoothClassicPlugin: FlutterPlugin, MethodChannel.MethodCallHand
             return true
         } catch (e: Exception) {
             Log.e(TAG, "connectInsecure exception: ${e.message}", e)
+            // ensure cleanup on failure
             disconnectInternal()
             return false
         }
@@ -230,16 +255,18 @@ class FlutterBluetoothClassicPlugin: FlutterPlugin, MethodChannel.MethodCallHand
 
     private fun disconnectInternal() {
         try { inputThread?.interrupt(); inputThread = null } catch (_: Exception) {}
-        try { inputStream?.close() } catch (_: Exception) {}
-        try { outputStream?.close() } catch (_: Exception) {}
+        try { inputStream?.close(); inputStream = null } catch (_: Exception) {}
+        try { outputStream?.close(); outputStream = null } catch (_: Exception) {}
         try { socket?.close(); socket = null } catch (_: Exception) {}
     }
 
     private fun writeToDevice(data: String): Boolean {
         return try {
             val out = outputStream ?: return false
-            out.write(data.toByteArray())
-            out.flush()
+            synchronized(out) {
+                out.write(data.toByteArray())
+                out.flush()
+            }
             true
         } catch (e: Exception) {
             Log.e(TAG, "writeToDevice error: ${e.message}", e)
@@ -249,20 +276,46 @@ class FlutterBluetoothClassicPlugin: FlutterPlugin, MethodChannel.MethodCallHand
 
     private fun startReaderThread() {
         val input = inputStream ?: return
+        // Ensure previous thread cleaned
+        try { inputThread?.interrupt() } catch (_: Exception) {}
         inputThread = thread(start = true, name = "bt-read-thread") {
             try {
                 val buffer = ByteArray(1024)
                 while (!Thread.currentThread().isInterrupted) {
-                    val read = input.read(buffer)
+                    val read = try {
+                        input.read(buffer)
+                    } catch (e: IOException) {
+                        Log.w(TAG, "reader read error: ${e.message}")
+                        -1
+                    }
                     if (read > 0) {
                         val payload = String(buffer, 0, read, Charsets.UTF_8)
-                        mainHandler.post { dataSink?.success(mapOf("data" to payload)) }
-                    } else break
+                        // post payload to Flutter on main thread
+                        mainHandler.post {
+                            try {
+                                dataSink?.success(mapOf("data" to payload))
+                            } catch (e: Exception) {
+                                Log.w(TAG, "dataSink success error: ${e.message}")
+                            }
+                        }
+                    } else {
+                        // read == 0 or -1 -> treat as closed
+                        Log.i(TAG, "reader thread: read <= 0 (closing reader)")
+                        break
+                    }
                 }
-            } catch (e: IOException) {
-                Log.w(TAG, "reader thread stopped: ${e.message}")
+            } catch (e: Exception) {
+                Log.w(TAG, "reader thread stopped with exception: ${e.message}")
             } finally {
-                mainHandler.post { dataSink?.endOfStream() }
+                // don't call endOfStream on data channel (keeps event channel reusable)
+                // instead notify connection state change
+                mainHandler.post {
+                    try {
+                        connectionSink?.success("disconnected")
+                    } catch (e: Exception) {
+                        Log.w(TAG, "connectionSink post error: ${e.message}")
+                    }
+                }
             }
         }
     }

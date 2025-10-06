@@ -19,5 +19,5 @@ class TimeoutException extends DioException {
 }
 
 class ServerException extends DioException {
-  ServerException(String message, [int? code]) : super(message, code);
+  ServerException(super.message, [super.code]);
 }

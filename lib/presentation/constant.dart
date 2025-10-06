@@ -30,6 +30,9 @@ class ConstColor {
   static var gCultured = const Color(0xffF5F5F5);
   static var gBlueGray = const Color(0xff607D8B);
   static var gGreen = const Color(0xff388E3C);
+  static var gTurquoise = const Color(0xff00BFA6);
+  static var gPrussianBlue = const Color(0xff003566);
+  static var gPacificBlue = const Color(0xff00b4d8);
 }
 
 class ConstPath {

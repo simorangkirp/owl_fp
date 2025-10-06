@@ -27,6 +27,8 @@ class ProfileController extends GetxController {
 
   // Booleans
   RxBool isDone = false.obs;
+  RxBool openLang = false.obs;
+  RxBool openTheme = false.obs;
 
   Future<void> getUser() async {
     var res = await _profileUseCase.execute();
@@ -95,27 +97,26 @@ class ProfileController extends GetxController {
         titlePadding: EdgeInsets.symmetric(vertical: 12.h, horizontal: 12.w),
         contentPadding: EdgeInsets.only(left: 12.w, right: 12.w),
         actionsPadding: EdgeInsets.only(left: 12.w, right: 12.w, bottom: 12.h),
-        title: Text(
-          'Sinkronisasi Master Data',
-          style: GoogleFonts.poppins(
-            fontSize: 16.sp,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        content: Text('Apa anda yakin mau sinkronisasi Master Data?'),
+        title: Text('masterdataSync'.tr,
+            style: GoogleFonts.poppins(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center),
+        content: Text('syncMstDataDialogBody'.tr, textAlign: TextAlign.center),
         actions: [
           TextButton(
               onPressed: () {
                 Get.back();
               },
-              child: Text("Cancel")),
+              child: Text("cancel".tr)),
           TextButton(
               onPressed: () {
                 isDone.value = false;
                 Get.back();
                 syncMD();
               },
-              child: Text("Confirm")),
+              child: Text("confirm".tr)),
         ],
       ),
       barrierDismissible: true,

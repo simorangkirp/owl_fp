@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 
-import '../../../../core/services/bluetooth.service.dart';
 import '../../../constant.dart';
 import '../controllers/bt14_ctrl_controller.dart';
 import '../controllers/fingerprint.controller.dart';
@@ -23,7 +22,7 @@ class FingerComponents extends StatelessWidget {
         controller: uiCtrl,
         children: [
           Text(
-            "Connection Bluetooth",
+            "btConnection".tr,
             style: Theme.of(context)
                 .textTheme
                 .titleMedium
@@ -59,7 +58,7 @@ class FingerComponents extends StatelessWidget {
                             },
                             validator: (value) {
                               if (value == null) {
-                                return 'Please select an option';
+                                return 'plSlcOpt'.tr;
                               }
                               return null;
                             },
@@ -78,8 +77,8 @@ class FingerComponents extends StatelessWidget {
                         ? null
                         : controller.scanDevices,
                     child: Text(controller.isDiscovering.value
-                        ? 'Scanning...'
-                        : 'Start Scan'),
+                        ? 'scanning'.tr
+                        : 'stScan'.tr),
                   ),
                 ),
               ),
@@ -99,23 +98,31 @@ class FingerComponents extends StatelessWidget {
                 return Card(
                   child: ListTile(
                     leading: const Icon(Icons.bluetooth),
-                    title: Text(device.name ?? "Unknown"),
+                    title: Text(device.name == "" ? "Undifined" : device.name),
                     subtitle: Text(device.address),
                     trailing: Obx(() {
                       final isConnected = controller.isConnected.value &&
                           controller.selectedDevice?.address == device.address;
+                      final connecting = controller.isConnecting.value;
                       return ElevatedButton(
-                        onPressed: () async {
-                          if (isConnected) {
-                            // Panggil static disconnect
-                            await FlutterBluetoothClassic.disconnect();
-                            controller.isConnected.value = false;
-                            controller.selectedDevice = null;
-                          } else {
-                            controller.selectedDevice = device;
-                            await controller.connectToDevice();
-                          }
-                        },
+                        onPressed: connecting
+                            ? null // tombol disable sementara connect/disconnect berjalan
+                            : () async {
+                                controller.isConnecting.value = true;
+                                if (isConnected) {
+                                  // Panggil static disconnect
+                                  await controller.disconnectDevice();
+                                  controller.isConnected.value = false;
+                                  controller.selectedDevice = null;
+                                } else {
+                                  controller.selectedDevice = device;
+                                  await controller.connectDialog();
+                                }
+                                // Delay kecil sebelum tombol bisa ditekan lagi
+                                await Future.delayed(
+                                    const Duration(milliseconds: 500));
+                                controller.isConnecting.value = false;
+                              },
                         child: Text(isConnected ? "Disconnect" : "Connect"),
                       );
                     }),
