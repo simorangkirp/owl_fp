@@ -115,12 +115,12 @@ class Bt14CtrlController extends GetxController {
     // 🔹 Connection listener
     _connSub = FlutterBluetoothClassic.onConnectionChanged().listen((conn) {
       log("🔌 Connection event: $conn");
-      if (conn.startsWith("connected")) {
-        isConnected.value = true;
-      } else if (conn.startsWith("disconnected") || conn.startsWith("failed")) {
-        isConnected.value = false;
-      }
-    });
+      // if (conn.startsWith("connected")) {
+      //   isConnected.value = true;
+      // } else if (conn.startsWith("disconnected") || conn.startsWith("failed")) {
+      //   isConnected.value = false;
+      // }
+    },);
 
     // 🔹 Data listener
     _dataSub = FlutterBluetoothClassic.onDataReceived().listen((data) {
