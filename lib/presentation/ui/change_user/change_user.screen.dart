@@ -9,7 +9,7 @@ import 'package:owl_fp_newer/presentation/ui/common/expandable.widget.dart';
 import 'controllers/change_user.controller.dart';
 
 class ChangeUserScreen extends GetView<ChangeUserController> {
-  const ChangeUserScreen({Key? key}) : super(key: key);
+  const ChangeUserScreen({super.key});
   @override
   Widget build(BuildContext context) {
     return Scaffold(

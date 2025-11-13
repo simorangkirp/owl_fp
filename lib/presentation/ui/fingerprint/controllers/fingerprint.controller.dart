@@ -4,8 +4,8 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:owl_fp_newer/domain/entity/dropopt.entity.dart';
+import 'package:owl_fp_newer/presentation/ui/common/controller/permission.controller.dart';
 
 import '../../../../core/resources/data.state.dart';
 import '../../../../core/resources/utils.dart';
@@ -19,7 +19,6 @@ import '../../../../domain/usecase/fingerprint/get.mst.admin.dart';
 import '../../../../domain/usecase/fingerprint/get.setting.options.dart';
 import '../../../../domain/usecase/fingerprint/get.uploaddown.opt.usecase.dart';
 import '../../../../domain/usecase/fingerprint/sn.usecase.dart';
-// import '../../../../domain/usecase/fingerprint/upload.tofinger.dart';
 import '../../../../domain/usecase/masterdata/find.karyawan.usecase.dart';
 import '../../../../domain/usecase/fingerprint/insert.template.dart';
 import '../../../../domain/usecase/fingerprint/delete.template.dart';
@@ -29,6 +28,15 @@ import '../../login/controllers/login.controller.dart';
 import 'bt14_ctrl_controller.dart';
 
 class FingerprintController extends GetxController {
+  // -------------------------
+  // Dependencies (single Find)
+  // -------------------------
+  /// NOTE:
+  /// Binding registers Bt14CtrlController & PermissionController before this controller
+  /// (see your `FingerprintControllerBinding`), so it's safe to `Get.find()` here.
+  final Bt14CtrlController btCtrl = Get.find<Bt14CtrlController>();
+  final PermissionController permCtrl = Get.find<PermissionController>();
+
   final FindKaryawanTupleUseCase _searchKaryawan;
   final GetUploadDownloadOptionsUseCase _getUploadDownloadOpt;
   final GetAdminOptionsUseCase _getAdminOpt;
@@ -41,8 +49,7 @@ class FingerprintController extends GetxController {
   final GetDataTemplate _getTemplateData;
   final SendTemplateUseCase _sendTemplateData;
   final GetMasterAdminUsecase _getAdminMasterData;
-  // final SendTemplateToDeviceUsecase _sendTempToDevice;
-  // final GetSNListUsecase _getSNUsecase;
+
   FingerprintController(
     this._searchKaryawan,
     this._getUploadDownloadOpt,
@@ -56,18 +63,28 @@ class FingerprintController extends GetxController {
     this._getTemplateData,
     this._sendTemplateData,
     this._getAdminMasterData,
-    // this._sendTempToDevice,
   );
 
-  /// Dropdown Option List
+  // -------------------------
+  // Form Keys
+  // -------------------------
+  final formAddAdminKey = GlobalKey<FormState>();
+  final formDeleteNikKey = GlobalKey<FormState>();
+  final formGPinKey = GlobalKey<FormState>();
+  final formUpdownKey = GlobalKey<FormState>();
+  final formRegisterKey = GlobalKey<FormState>();
+  final formKeySendTemplateKey = GlobalKey<FormState>();
+
+  // -------------------------
+  // Dropdown / Options
+  // -------------------------
   var optSetting = <DropOptionEntity>[].obs;
   var opt1 = <String>[].obs;
   var timeOpt = <String>[].obs;
   var uploadDownloadList = <String>[].obs;
   var adminDDOptList = <String>[].obs;
 
-  ///
-  /// Selected Option Variables
+  // Selected option variables
   var selectedSetting = ''.obs;
   var selectedSettingId = 0.obs;
   var selectedOpt1 = ''.obs;
@@ -76,42 +93,80 @@ class FingerprintController extends GetxController {
   var selectedDate = ''.obs;
   var selectedTime = ''.obs;
 
-  ///
-  /// Other Variables
+  // -------------------------
+  // Other vars
+  // -------------------------
   final box = StorageService.instance;
+  RxBool isPwObscured = true.obs;
 
-  ///
-  /// Boolean Variables
+  // -------------------------
+  // Boolean states
+  // -------------------------
   var devinfSendTmplt = false.obs;
   var devinfResetFp = false.obs;
   var devinfResetMobile = false.obs;
   var doneProcess = false.obs;
 
-  ///
-  // Upload And Download Template
+  // Upload / download state
   var undselectedMenuIndex = 0.obs;
   var admselectedMenuIndex = 0.obs;
 
-  /// Admin
-  // Controllers
-  var oldpinCtrl = TextEditingController();
-  var newpinCtrl = TextEditingController();
-  var confpinCtrl = TextEditingController();
+  // -------------------------
+  // Admin controllers & fields
+  // -------------------------
+  final oldpinCtrl = TextEditingController();
+  final newpinCtrl = TextEditingController();
+  final confpinCtrl = TextEditingController();
 
-  // Variabels
-  var typeAheadController = TextEditingController()..text = "";
-  var taDeleteCtrl = TextEditingController()..text = "";
-  var authDialogCtrl = TextEditingController();
+  // Typeahead / dialog
+  final typeAheadController = TextEditingController()..text = "";
+  final taDeleteCtrl = TextEditingController()..text = "";
+  final authDialogCtrl = TextEditingController();
   var authDialogArg = "";
   var selectedSN = ''.obs;
 
-  // List
+  // -------------------------
+  // Lists / data
+  // -------------------------
   var karyawanlist = <KaryawanEntity>[].obs;
   var listSN = <String>[].obs;
   var dataTemplate = <Map<String, dynamic>>[];
   var listAdminOpt = <MstAdminModel>[].obs;
 
-  ///  Asyncronous Function List
+  // -------------------------
+  // Lifecycle
+  // -------------------------
+  @override
+  Future<void> onInit() async {
+    super.onInit();
+    // preload required data
+    await searchData();
+    await getDropdownOptionList();
+    await getSNList();
+    await getMstAdmin();
+  }
+
+  @override
+  Future<void> onReady() async {
+    super.onReady();
+  }
+
+  @override
+  Future<void> onClose() async {
+    // Dispose controllers created here
+    oldpinCtrl.dispose();
+    newpinCtrl.dispose();
+    confpinCtrl.dispose();
+    typeAheadController.dispose();
+    taDeleteCtrl.dispose();
+    authDialogCtrl.dispose();
+    super.onClose();
+  }
+
+  // -------------------------
+  // Usecase / Async functions
+  // -------------------------
+
   Future<void> getMstAdmin() async {
     listAdminOpt.value = await _getAdminMasterData.execute();
     for (var element in listAdminOpt) {
@@ -148,7 +203,7 @@ class FingerprintController extends GetxController {
         await gantiPIN();
         break;
       case 1:
-        await sendTemplateToDevice();
+        await tambahAdminPrivilege();
         break;
       case 2:
         await adminHapusbyNik();
@@ -177,13 +232,14 @@ class FingerprintController extends GetxController {
         barrierDismissible: false,
       );
     });
-    // Pantau kondisi isRegistered dan tutup dialog jika true
+
     ever(doneProcess, (registered) async {
       if (registered == true && Get.isDialogOpen == true) {
         doneProcess.value = false;
-        Get.back(); // menutup dialog
+        Get.back();
       }
     });
+
     await uploadTemplateToServer();
   }
 
@@ -206,7 +262,6 @@ class FingerprintController extends GetxController {
       var exp = await isTokenExpired(box.expToken);
       if (!exp) {
         log("Token Not Expired Yet");
-        //! Kirim Ke Server
         ret = await _sendTemplateData.execute(body);
       } else {
         log("Token Expired");
@@ -225,62 +280,51 @@ class FingerprintController extends GetxController {
   }
 
   Future<void> sendTemplateToDevice() async {
-    final btCtrl = Get.find<Bt14CtrlController>();
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.dialog(
-        Dialog(
-          insetPadding:
-              EdgeInsets.symmetric(horizontal: 0.1.sw, vertical: 0.2.sh),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 24.h),
-                Text("Mengirimkan data!.")
-              ],
+    await checkPermission(() async {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Get.dialog(
+          Dialog(
+            insetPadding:
+                EdgeInsets.symmetric(horizontal: 0.1.sw, vertical: 0.2.sh),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 24.h),
+                  Text("Mengirimkan data!.")
+                ],
+              ),
             ),
           ),
-        ),
-        barrierDismissible: false,
-      );
-    });
+          barrierDismissible: false,
+        );
+      });
 
-    var data = await _getTemplateData.execute(selectedSN.value);
-    if (data.isNotEmpty) {
-      log('Total Data: ${data.length}');
-      for (var el in data) {
-        log("Send Template with NIK : ${el.nik}");
-        await btCtrl.sendTemplByNik(el.nik ?? "", el.template ?? "");
+      var data = await _getTemplateData.execute(selectedSN.value);
+      if (data.isNotEmpty) {
+        log('Total Data: ${data.length}');
+        for (var el in data) {
+          log("Send Template with NIK : ${el.nik}");
+          await btCtrl.sendTemplateByNIK(
+              el.nik ?? "", el.template ?? "", authDialogArg);
+        }
+      } else {
+        log("❌ Tidak ada data template ditemukan");
       }
-    } else {
-      log("❌ Tidak ada data template ditemukan");
-    }
 
-    // 🔹 Tunggu sampai proses selesai (isDone true)
-    await waitUntilDone(btCtrl.isDone);
+      // Tunggu sampai selesai
+      await waitUntilDone(btCtrl.isDone);
 
-    if (Get.isDialogOpen == true) {
-      Get.back();
-      btCtrl.resetVariables();
-    }
+      if (Get.isDialogOpen == true) {
+        Get.back();
+        btCtrl.resetVariables();
+      }
+    });
   }
 
-  // Future<void> insertTemplateLocal(String args) async {
-  //   final btC = Get.find<BluetoothController>();
-  //   await btC.getTemplateFromDevice(args);
-  //   do {
-  //     await btC.cekbouncer();
-  //   } while (!btC.isDone.value);
-  //   await _deleteTemplateUseCase.execute(dataTemplate.first['sn']);
-  //   return await _insertTemplateUseCase.execute(dataTemplate);
-  // }
-
   Future<void> insertTemplateLocal(String args) async {
-    final btCtrl = Get.find<Bt14CtrlController>();
-
     // Tunggu sampai template selesai diterima
     await btCtrl.getTemplateFromDevice(args);
 
@@ -316,17 +360,13 @@ class FingerprintController extends GetxController {
   }
 
   Future<void> getSNList() async {
-    // await _tempCtrl.getSN();
-    // if (_tempCtrl.listSN.isNotEmpty) {
     listSN.value = await _getSNUsecase.execute();
     for (var el in listSN) {
       log(el);
     }
-    // }
   }
 
   Future<void> tambahAdminPrivilege() async {
-    final btCtrl = Get.find<Bt14CtrlController>();
     String access = "";
     for (var el in listAdminOpt) {
       if (el.selected.value) {
@@ -335,22 +375,25 @@ class FingerprintController extends GetxController {
         access = '${access}0';
       }
     }
-    await btCtrl.addAdminPrivilages(access, authDialogArg);
+    await btCtrl.addAdminPrivileges(access, authDialogArg, "");
     await btCtrl.resetVariables();
     authDialogCtrl.clear();
     authDialogArg = "";
   }
 
   Future<void> adminHapusbyNik() async {
-    final btCtrl = Get.find<Bt14CtrlController>();
-    await btCtrl.regdelFinger(1);
+    await btCtrl.regDelFinger(
+      isRegister: false, // false kalau hapus
+      nik: btCtrl.selectedRegisterNIK, // pakai variable dari controller
+      name: btCtrl.selectedRegisterNm, // pakai variable dari controller
+      auth: authDialogArg,
+    );
     authDialogCtrl.clear();
     await btCtrl.resetVariables();
     authDialogArg = "";
   }
 
   Future<void> gantiPIN() async {
-    final btCtrl = Get.find<Bt14CtrlController>();
     if (oldpinCtrl.text == confpinCtrl.text) {
       await btCtrl.gantiPIN(newpinCtrl.text, authDialogArg);
       await btCtrl.resetVariables();
@@ -373,22 +416,40 @@ class FingerprintController extends GetxController {
     authDialogArg = "";
   }
 
-  @override
-  Future<void> onInit() async {
-    await searchData();
-    await getDropdownOptionList();
-    await getSNList();
-    await getMstAdmin();
-    super.onInit();
+  /// Centralized permission + connection check
+  Future<void> checkPermission(
+    Function onGranted, {
+    bool requireConnectedDevice = true,
+  }) async {
+    log("Selected: ${btCtrl.selectedDevice.value}, IsCon: ${btCtrl.isConnected.value}, ReqCon: $requireConnectedDevice");
+
+    await permCtrl.checkBtAdaptor();
+    if (!permCtrl.bluetoothAdaptor.value) {
+      showSnackBar("Adaptor Bluetooth tidak ditemukan atau belum aktif.");
+      return;
+    }
+
+    await permCtrl.requestBluetoothPermission();
+    if (!permCtrl.bluetoothGranted.value) {
+      showSnackBar("Mohon izinkan akses Bluetooth terlebih dahulu.");
+      return;
+    }
+
+    if (requireConnectedDevice) {
+      if (btCtrl.selectedDevice.value == null || !btCtrl.isConnected.value) {
+        showSnackBar("Belum ada perangkat Bluetooth yang terhubung.");
+        return;
+      }
+    }
+
+    await onGranted();
   }
 
-  @override
-  Future<void> onReady() async {
-    super.onReady();
-  }
-
-  @override
-  Future<void> onClose() async {
-    super.onClose();
+  // -------------------------
+  // Utility / Reset
+  // -------------------------
+  Future<void> resetLocalStateAfterOp() async {
+    authDialogCtrl.clear();
+    authDialogArg = "";
   }
 }

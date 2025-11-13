@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:owl_fp_newer/domain/entity/karyawan.entity.dart';
+import 'package:owl_fp_newer/presentation/ui/common/dialog.dart';
 
 import '../../../constant.dart';
+import '../../common/app.typeahead.dart';
 import '../controllers/bt14_ctrl_controller.dart';
 import '../controllers/fingerprint.controller.dart';
 
 class RegisterComponent extends StatelessWidget {
   RegisterComponent({super.key});
+
   final btctrl = Get.find<Bt14CtrlController>();
   final controller = Get.find<FingerprintController>();
 
@@ -17,174 +20,111 @@ class RegisterComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context).textTheme;
     final indicator = Theme.of(context).tabBarTheme.indicator;
-    Color borderColor = Colors.blue; // fallback
+    Color borderColor = Colors.blue;
 
     if (indicator is UnderlineTabIndicator) {
       borderColor = indicator.borderSide.color;
     }
 
-    opendialog(int index) {
-      return Get.bottomSheet(
-        Container(
-          margin: EdgeInsets.symmetric(vertical: 0.1.sh, horizontal: 0.1.sw),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            color: Theme.of(context).scaffoldBackgroundColor,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+    Future<void> onOpenDialog(int index) async {
+      await btctrl.checkPermission(() {
+        showAuthDialog(
+          obsecure: controller.isPwObscured,
+          title: "auth".tr, // Otentikasi
+          message: "inputPassword".tr, // Masukkan Password
+          controller: btctrl.authCtrl,
+          onSubmit: () async {
+            Get.back();
+            await btctrl.regDelFinger(
+              isRegister: index == 0 ? true : false, // false kalau hapus
+              nik: btctrl.selectedRegisterNIK, // pakai variable dari controller
+              name: btctrl.selectedRegisterNm, // pakai variable dari controller
+              auth: btctrl.authText,
+            );
+          },
+        );
+      });
+    }
+
+    // 🧱 UI utama
+    return Padding(
+      padding: ConstPadding.screenPadding,
+      child: Form(
+        key: controller.formRegisterKey, // 🔑 gunakan formKey dari controller
+        child: ListView(
+          children: [
+            Text(
+              "rndFinger".tr,
+              style: theme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const Divider(),
+            SizedBox(height: 12.h),
+
+            /// 🔍 TypeAheadField dengan validator
+            AppTypeAheadField<KaryawanEntity>(
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Kolom ini wajib diisi!';
+                }
+                return null;
+              },
+              controller: controller.typeAheadController,
+              hintText: 'findEmply'.tr,
+              suggestionsCallback: (pattern) async {
+                return controller.karyawanlist.where((item) {
+                  final name = item.namakaryawan ?? "Undefined";
+                  return name.toLowerCase().contains(pattern.toLowerCase());
+                }).toList();
+              },
+              itemBuilder: (context, suggestion) {
+                return ListTile(title: Text(suggestion.namakaryawan ?? ""));
+              },
+              onSuggestionSelected: (suggestion) {
+                btctrl.selectedRegisterNm = suggestion.namakaryawan ?? "";
+                btctrl.selectedRegisterNIK = suggestion.nik ?? "";
+                controller.typeAheadController.text =
+                    suggestion.namakaryawan ?? "";
+              },
+              noItemsFoundBuilder: (ctx) => Padding(
+                padding: const EdgeInsets.all(8),
+                child: Text("${"notFound".tr}!"),
+              ),
+            ),
+
+            SizedBox(height: 12.h),
+
+            /// 🔘 Tombol aksi
+            Row(
               children: [
-                Text("auth".tr),
-                SizedBox(height: 12.h),
-                Text("inputPassword".tr),
-                SizedBox(height: 8.h),
-                TextField(
-                  controller: btctrl.authCtrl,
-                  onChanged: (value) {
-                    btctrl.authText = value;
+                ElevatedButton.icon(
+                  icon: Icon(LucideIcons.userPlus2,
+                      color: Colors.white, size: 18.sp),
+                  label: Text('register'.tr),
+                  onPressed: () {
+                    // ✅ Validasi pakai controller.formKey
+                    if (controller.formRegisterKey.currentState!.validate()) {
+                      onOpenDialog(0);
+                    }
                   },
                 ),
-                SizedBox(height: 12.h),
-                ElevatedButton(
+                SizedBox(width: 8.w),
+                ElevatedButton.icon(
+                  icon: Icon(LucideIcons.trash2,
+                      color: Colors.white, size: 18.sp),
+                  label: Text('delete'.tr),
                   style: ElevatedButton.styleFrom(
-                    fixedSize: Size(double.maxFinite, 42.h),
+                    backgroundColor: borderColor,
                   ),
-                  onPressed: () async {
-                    Get.back();
-                    await btctrl.regdelFinger(index);
+                  onPressed: () {
+                    if (controller.formRegisterKey.currentState!.validate()) {
+                      onOpenDialog(1);
+                    }
                   },
-                  child: Text('send'.tr),
                 ),
               ],
             ),
-          ),
+          ],
         ),
-        isScrollControlled: true, // 👈 biar naik waktu keyboard muncul
-      );
-    }
-
-    return Padding(
-      padding: ConstPadding.screenPadding,
-      child: ListView(
-        children: [
-          Text(
-            "rndFinger".tr,
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(fontWeight: FontWeight.w600),
-          ),
-          Divider(),
-          SizedBox(height: 12.h),
-          // Text("Pilih Karyawan:"),
-          TypeAheadField(
-            // builder untuk bikin TextField
-            builder: (context, textController, focusNode) {
-              return TextField(
-                controller:
-                    controller.typeAheadController, // pakai controller kamu
-                focusNode: focusNode,
-                decoration: InputDecoration(
-                  labelStyle: theme.labelLarge,
-                  labelText: 'findEmply'.tr,
-                  border: const OutlineInputBorder(),
-                ),
-              );
-            },
-            // ambil data suggestion
-            suggestionsCallback: (pattern) async {
-              return controller.karyawanlist.where((item) {
-                var name = item.namakaryawan ?? "Undefined";
-                return name.toLowerCase().contains(pattern.toLowerCase());
-              }).toList();
-            },
-            // render suggestion item
-            itemBuilder: (context, suggestion) {
-              return ListTile(
-                title: Text(suggestion.namakaryawan ?? ""),
-              );
-            },
-            // ketika suggestion dipilih
-            onSelected: (suggestion) {
-              btctrl.selectedRegisterNm = suggestion.namakaryawan ?? "";
-              btctrl.selectedRegisterNIK = suggestion.nik ?? "";
-              controller.typeAheadController.text =
-                  suggestion.namakaryawan ?? "";
-            },
-          ),
-          Visibility(
-              visible: controller.typeAheadController.text.isNotEmpty,
-              child: SizedBox(height: 8.h)),
-          Visibility(
-              visible: controller.typeAheadController.text.isNotEmpty,
-              child: Text("Pattern")),
-          Visibility(
-              visible: controller.typeAheadController.text.isNotEmpty,
-              child: SizedBox(height: 8.h)),
-          Visibility(
-            visible: controller.typeAheadController.text.isNotEmpty,
-            child: Container(
-              width: double.maxFinite,
-              height: 0.3.sh,
-              color: Colors.grey[200],
-            ),
-          ),
-          SizedBox(height: 12.h),
-          Row(
-            children: [
-              ElevatedButton(
-                onPressed: () {
-                  opendialog(0);
-                },
-                child: IntrinsicHeight(
-                  child: Row(
-                    children: [
-                      Icon(
-                        LucideIcons.userPlus2,
-                        color: Colors.white,
-                        size: 18.sp,
-                      ),
-                      VerticalDivider(
-                        color: Colors.white,
-                        thickness: 1.w,
-                      ),
-                      // SizedBox(width: 8.w),
-                      Text('register'.tr),
-                    ],
-                  ),
-                ),
-              ),
-              SizedBox(width: 8.w),
-              ElevatedButton(
-                onPressed: () {
-                  opendialog(1);
-                },
-                style: ElevatedButton.styleFrom(backgroundColor: borderColor),
-                child: IntrinsicHeight(
-                  child: Row(
-                    children: [
-                      Icon(
-                        LucideIcons.trash2,
-                        color: Colors.white,
-                        size: 18.sp,
-                      ),
-                      VerticalDivider(
-                        color: Colors.white,
-                        thickness: 1.w,
-                      ),
-                      // SizedBox(width: 8.w),
-                      Text('delete'.tr),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          // SizedBox(height: 12.h),
-          // deleteByNikWidget(),
-        ],
       ),
     );
   }

@@ -13,3 +13,4 @@ export '..//bindings/splash.controller.binding.dart';
 export '..//bindings/template.controller.binding.dart';
 export '..//bindings/theme.controller.binding.dart';
 export 'package:owl_fp_newer/infrastructure/navigation/bindings/controllers/change_user.controller.binding.dart'; 
+export '..//bindings/permission.controller.binding.dart';

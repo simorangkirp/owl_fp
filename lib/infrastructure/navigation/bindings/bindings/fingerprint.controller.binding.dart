@@ -1,7 +1,7 @@
 import 'package:get/get.dart';
 
 import 'package:owl_fp_newer/domain/usecase/fingerprint/delete.template.dart';
-import 'package:owl_fp_newer/presentation/ui/fingerprint/controllers/bt14_ctrl_controller.dart';
+import 'package:owl_fp_newer/presentation/ui/common/controller/permission.controller.dart';
 
 import '/domain/usecase/fingerprint/get.admin.ddoptlist.dart';
 import '/data/dal/daos/fingerprint/fp.repoimpl.dart';
@@ -59,9 +59,9 @@ class FingerprintControllerBinding extends Bindings {
     Get.lazyPut(
       () => GetMasterAdminUsecase(Get.find<FingerprintRepoImpl>()),
     );
-    // Tambahkan controller Bt14CtrlController
-    Get.lazyPut<Bt14CtrlController>(
-      () => Bt14CtrlController(),
+    // Tambahkan controller PermissionController
+    Get.lazyPut<PermissionController>(
+      () => PermissionController(),
     );
     // Get.lazyPut(
     //   () => SendTemplateToDeviceUsecase(Get.find<FingerprintRepoImpl>()),

@@ -144,7 +144,9 @@ class LoginController extends GetxController {
         }
       }
     } catch (e) {
-      if (Get.isDialogOpen == true) Get.back();
+      if (Get.isDialogOpen == true) {
+        Get.back(closeOverlays: true);
+      }
 
       Get.snackbar(
         "Login Gagal",
@@ -186,22 +188,12 @@ class LoginController extends GetxController {
     isSync.value = true;
     storage.saveUsername(unCtrl.text);
     storage.savePwd(pwCtrl.text);
-
-    // final res = await _loginUseCase.execute(unCtrl.text, pwCtrl.text);
-    await _loginUseCase.execute(unCtrl.text, pwCtrl.text);
-
-    // DialogHelper.handleApiResult(
-    //   res,
-    //   successMessage: "Login berhasil, selamat datang!",
-    //   onSuccess: (data) {
-    //     if (data is Map<String, dynamic> && data['error'] != false) {
-    //       storage.saveUsername(unCtrl.text);
-    //       storage.savePwd(pwCtrl.text);
-    //       storage.saveIsLoggedIn(true);
-    //     }
-    //   },
-    // );
-
+    try {
+      await _loginUseCase.execute(unCtrl.text, pwCtrl.text);
+    } catch (e) {
+      log("Login gagal: $e");
+      rethrow; // biar ditangani di snackbar loginDialog
+    }
     isSync.value = false;
   }
 
@@ -210,24 +202,11 @@ class LoginController extends GetxController {
       storage.username ?? "",
       storage.pwd ?? "",
     );
-
-    // DialogHelper.handleApiResult(
-    //   res,
-    //   successMessage: "Login ulang berhasil!",
-    // );
-
     isSync.value = true;
   }
 
   Future<void> getProfileApi() async {
-    // final res = await _profileUseCase.execute();
     await _profileUseCase.execute();
-
-    // DialogHelper.handleApiResult(
-    //   res,
-    //   successMessage: "Profile berhasil diambil",
-    //   onSuccess: (_) => isSync.value = true,
-    // );
   }
 
   Future<void> onLoginGetMasterData() async {

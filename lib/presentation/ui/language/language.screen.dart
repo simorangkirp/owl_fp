@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'controllers/language.controller.dart';
 
 class LanguageScreen extends GetView<LanguageController> {
-  const LanguageScreen({Key? key}) : super(key: key);
+  const LanguageScreen({super.key});
   @override
   Widget build(BuildContext context) {
     return Scaffold(

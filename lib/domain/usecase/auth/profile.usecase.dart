@@ -7,7 +7,13 @@ class ProfileUseCase {
 
   ProfileUseCase(this.repository);
 
-  Future<DataState> execute() {
-    return repository.getProfile();
+  Future<DataState> execute() async {
+    var result = await repository.getProfile();
+    if (result is DataError) {
+      final message = result.error?.toString() ?? "Terjadi kesalahan.";
+      // 🚨 Langsung throw biar bisa di-catch di controller
+      throw Exception(message);
+    }
+    return result;
   }
 }

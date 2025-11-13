@@ -8,7 +8,7 @@ import 'package:owl_fp_newer/presentation/ui/profile/profile.screen.dart';
 import '../../theme/btm.navbar.ctrl.dart';
 
 class HomeScreen extends StatelessWidget {
-  HomeScreen({Key? key}) : super(key: key);
+  HomeScreen({super.key});
   final controller = Get.find<BottomNavController>();
 
   final pages = [

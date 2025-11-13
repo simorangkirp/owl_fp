@@ -70,7 +70,7 @@ class FingerprintRepoImpl implements FingerprintRepository {
       }
       return DataError(httpResp.data);
     } on DioException catch (e) {
-      return DataError(e);
+      return DataError(e.message);
     }
   }
 

@@ -1,87 +1,127 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:owl_fp_newer/core/helper/send.command.ext.dart';
+import 'package:owl_fp_newer/core/resources/bt.native.dart';
 import 'package:owl_fp_newer/data/dal/services/get.storage.dart';
+import 'package:owl_fp_newer/domain/entity/bt.entity.dart';
+import 'package:owl_fp_newer/domain/usecase/bluetooth/connect.device.uc.dart';
+import 'package:owl_fp_newer/domain/usecase/bluetooth/disconnect.uc.dart';
+import 'package:owl_fp_newer/domain/usecase/bluetooth/get.paired.uc.dart';
+import 'package:owl_fp_newer/domain/usecase/bluetooth/init.listener.uc.dart';
+import 'package:owl_fp_newer/domain/usecase/bluetooth/process.parser.uc.dart';
+import 'package:owl_fp_newer/domain/usecase/bluetooth/scan.devices.uc.dart';
+import 'package:owl_fp_newer/domain/usecase/bluetooth/send.command.uc.dart';
+import 'package:owl_fp_newer/presentation/ui/common/controller/permission.controller.dart';
 import '../../../../core/resources/utils.dart';
 import '../../../../core/services/bluetooth.service.dart';
 
 class Bt14CtrlController extends GetxController {
-  // States
+  final ScanDevicesUseCase _scanDeviceUc;
+  final ConnectDeviceUseCase _connectDeviceUseCase;
+  final InitBluetoothListenersUseCase _initBluetoothListenersUseCase;
+  final ProcessBluetoothBufferUseCase _processBluetoothBuffer;
+  final GetPairedDevicesUseCase _getPairedDevicesUseCase;
+  final SendCommandUseCase _sendCommandUseCase;
+  final DisconnectDeviceUseCase _disconnectDeviceUseCase;
+  Bt14CtrlController(
+    this._scanDeviceUc,
+    this._connectDeviceUseCase,
+    this._initBluetoothListenersUseCase,
+    this._processBluetoothBuffer,
+    this._getPairedDevicesUseCase,
+    this._sendCommandUseCase,
+    this._disconnectDeviceUseCase,
+  );
+  // ─────────────────────────────────────────────────────────────
+  // 🧠 STATE VARIABLES
+  // ─────────────────────────────────────────────────────────────
   RxBool isSupported = false.obs;
   RxBool isEnabled = false.obs;
   RxBool isConnected = false.obs;
   RxBool isDiscovering = false.obs;
   RxBool isConnecting = false.obs;
+  RxBool isIncorrect = false.obs;
+  RxBool isDone = false.obs;
+  RxBool bufferProcess = false.obs;
 
-  var devices = <BluetoothDevice>[].obs;
-  BluetoothDevice? selectedDevice;
+  // ─────────────────────────────────────────────────────────────
+  // 🔹 BLUETOOTH DEVICE LIST & SELECTION
+  // ─────────────────────────────────────────────────────────────
+  var devices = <BluetoothDeviceEntity>[].obs;
+  final selectedDevice = Rxn<BluetoothDeviceEntity>();
+  var bondedDevices = <BluetoothDeviceEntity>[].obs;
+  var unBondedDevices = <BluetoothDeviceEntity>[].obs;
+  var owlDevices = <BluetoothDeviceEntity>[].obs;
 
-  // WIFI
-  var ssidNm = TextEditingController();
-  var ssidPw = TextEditingController();
+  // ─────────────────────────────────────────────────────────────
+  // 🔹 CONTROLLERS (Text Editing)
+  // ─────────────────────────────────────────────────────────────
+  final ssidNm = TextEditingController();
+  final ssidPw = TextEditingController();
+  final waktuUploadCtrl = TextEditingController();
+  final clientIDCtrl = TextEditingController();
+  final alamatServerCtrl = TextEditingController();
+  final waktuDeleteCtrl = TextEditingController();
+  final authCtrl = TextEditingController();
+  final selectedtod = TextEditingController()..text = 'hh:ss';
+  final selectedDt = TextEditingController()..text = 'dd/MM/yyyy';
+  RxBool isPwObscured = true.obs;
 
-  // Waktu Upload
-  var waktuUploadCtrl = TextEditingController();
-
-  // Client ID
-  var clientIDCtrl = TextEditingController();
-
-  // Alamat Server
-  var alamatServerCtrl = TextEditingController();
-
-  // Tanggal & Jam
+  // ─────────────────────────────────────────────────────────────
+  // 🔹 WAKTU
+  // ─────────────────────────────────────────────────────────────
   TimeOfDay tod = TimeOfDay.now();
   DateTime dt = DateTime.now();
-  var selectedtod = 'hh:ss'.obs;
-  var selectedDt = 'dd/MM/yyyy'.obs;
 
-  // Waktu Delete Absen
-  var waktuDeleteCtrl = TextEditingController();
-
-  // Registrasi finger baru
-  var selectedRegisterNm = "";
-  var selectedRegisterNIK = "";
-
-  // Delete finger karyawan
-  var selectedDeleteNm = "";
-  var selectedDeleteNIK = "";
-
-  // Otentikasi
-  var authCtrl = TextEditingController();
-  var authText = '';
-
-  // Buffer untuk data masuk
+  // ─────────────────────────────────────────────────────────────
+  // 🔹 DATA PARSE BUFFER
+  // ─────────────────────────────────────────────────────────────
   StringBuffer buffer = StringBuffer();
-  RxBool bufferProcess = false.obs;
   Timer? _idleTimer;
-  // final Completer<void> _templateCompleter = Completer<void>();
+  final RxInt resultCounter = 0.obs;
 
-  // Connection Subscriptions
+  // ─────────────────────────────────────────────────────────────
+  // 🔹 STREAMS
+  // ─────────────────────────────────────────────────────────────
   StreamSubscription? _stateSub;
   StreamSubscription? _connSub;
   StreamSubscription? _dataSub;
-  StreamSubscription? _discoverySub; // 🔹 Tambahan untuk discovery
+  StreamSubscription? _discoverySub;
+  StreamSubscription? _btStateSub;
 
-  // Re-connect
+  // ─────────────────────────────────────────────────────────────
+  // 🔹 FLAGS
+  // ─────────────────────────────────────────────────────────────
   final handshakeDone = false.obs;
-
-  // Data hasil parse
-  RxBool isDone = false.obs;
-  final RxInt resultCounter = 0.obs;
+  var incorrectString = "";
   Map<String, dynamic>? deviceInfo;
   List<Map<String, dynamic>> listInsertTemplate = [];
-  var box = StorageService.instance;
+  final box = StorageService.instance;
+
+  // ─────────────────────────────────────────────────────────────
+  // 🔹 REGISTRASI / DELETE VARIABLES
+  // ─────────────────────────────────────────────────────────────
+  String selectedRegisterNIK = "";
+  String selectedRegisterNm = "";
+  String selectedDeleteNIK = "";
+  String selectedDeleteNm = "";
+  String authText = "";
 
   @override
   void onInit() {
     super.onInit();
-    // _initListeners();
+    // _initListeners(); // only after connect
     checkSupport();
+    // Start listening to native state stream (EventChannel)
+    listenToBluetoothState();
+
+    _initListeners();
+    getBondedDevices();
+
     ever(isDone, (registered) {
       if (registered == true && Get.isDialogOpen == true) {
         Get.back(); // nutup dialog
@@ -92,6 +132,7 @@ class Bt14CtrlController extends GetxController {
 
   @override
   void onClose() {
+    _btStateSub?.cancel();
     _stateSub?.cancel();
     _connSub?.cancel();
     _dataSub?.cancel();
@@ -100,98 +141,102 @@ class Bt14CtrlController extends GetxController {
     super.onClose();
   }
 
-  void _initListeners() {
-    // Cancel subscription lama kalau ada
-    _stateSub?.cancel();
-    _connSub?.cancel();
-    _dataSub?.cancel();
-
-    // 🔹 Bluetooth state listener
-    _stateSub = FlutterBluetoothClassic.onStateChanged().listen((state) {
-      log("📡 Bluetooth state: $state");
-      isEnabled.value = (state == "enabled");
-    });
-
-    // 🔹 Connection listener
-    _connSub = FlutterBluetoothClassic.onConnectionChanged().listen((conn) {
-      log("🔌 Connection event: $conn");
-      // if (conn.startsWith("connected")) {
-      //   isConnected.value = true;
-      // } else if (conn.startsWith("disconnected") || conn.startsWith("failed")) {
-      //   isConnected.value = false;
-      // }
-    },);
-
-    // 🔹 Data listener
-    _dataSub = FlutterBluetoothClassic.onDataReceived().listen((data) {
-      log("📩 Data received: ${data['data']}");
-      // Tambahkan ke buffer
-      buffer.write(data['data']);
-      // Proses buffer
-      _processBuffer(
-        onComplete: () {
-          // Bisa ditambahkan callback jika perlu
-        },
-      );
-    });
+  Future<void> _initListeners() async {
+    await _initBluetoothListenersUseCase.execute(
+      onStateChanged: (state) {
+        isEnabled.value = (state == "enabled");
+      },
+      onConnectionChanged: (conn) {
+        log("🔌 Connection: $conn"); // conn adalah String
+      },
+      onDataReceived: (data) {
+        onDataReceived(data);
+      },
+    );
   }
 
-  // Fungsi untuk proses buffer JSON
-  void _processBuffer({VoidCallback? onComplete}) {
-    var foundCompleteJson = false;
+  Future<void> _executeWithPermission(
+    Future<void> Function() action, {
+    bool requireConnectedDevice = true,
+  }) async {
+    await checkPermission(() async {
+      await action();
+    }, requireConnectedDevice: requireConnectedDevice);
+  }
 
-    while (true) {
-      final current = buffer.toString();
-      final endIndex = current.indexOf('}');
-      if (endIndex == -1) break;
+  void onDataReceived(String dataChunk) {
+    buffer.write(dataChunk);
+    final result = _processBluetoothBuffer.execute(buffer);
 
-      final jsonString = current.substring(0, endIndex + 1);
-
-      try {
-        final data = json.decode(jsonString);
-        log('JSON terdekripsi: $data');
-
-        if (data is Map<String, dynamic>) {
-          if (data.containsKey("sn") && data.containsKey("template")) {
-            log("Insert To Template $data");
-            listInsertTemplate.add(data);
-          }
-
-          // jika ada result -> increment resultCounter supaya pengirim bisa
-          // mendeteksi balasan segera (tanpa menunggu idle timer)
-          if (data.containsKey("result")) {
-            log("🔔 Result diterima: ${data['result']}");
-            resultCounter.value = resultCounter.value + 1;
-          }
-
-          // ✅ Tambahin cek untuk registrasi
-          if (data.containsKey("perintah")) {
-            log("📌 Perintah dari device: ${data['perintah']}");
-            isDone.value = true; // langsung trigger done
-          }
-
-          // ✅ Handshake sukses → ada SN
-          if (data.containsKey("sn") && data.containsKey("sensor")) {
-            log("🤝 Handshake OK dari device SN: ${data['sn']}");
-            deviceInfo = data;
-            handshakeDone.value = true; // tandain sukses
-          }
-        }
-
-        foundCompleteJson = true;
-      } catch (e) {
-        log('Gagal decode JSON: $e');
-      } finally {
-        buffer.clear();
-      }
-
-      final remaining = current.substring(endIndex + 1).trimLeft();
-      buffer = StringBuffer(remaining);
+    if (result.insertTemplates.isNotEmpty) {
+      listInsertTemplate.addAll(result.insertTemplates);
+    }
+    if (result.resultCount > 0) {
+      resultCounter.value += result.resultCount;
+    }
+    if (result.done) {
+      isDone.value = true;
+    }
+    if (result.handshakeOk && result.deviceInfo != null) {
+      handshakeDone.value = true;
+      deviceInfo = result.deviceInfo;
+    }
+    if (result.incorrect) {
+      incorrectString = "incorrect";
+      isIncorrect.value = true;
+      isDone.value = true;
     }
 
-    // 🔹 Reset idle timer setiap kali ada JSON valid
-    if (foundCompleteJson) {
-      _resetIdleTimer(onComplete);
+    if (result.hasValidJson) {
+      _resetIdleTimer(() {
+        // misalnya callback setelah parsing selesai
+        log("✅ Idle timer di-reset karena JSON valid diterima");
+      });
+    }
+  }
+
+  /// Listen ke EventChannel dari native (BluetoothService.bluetoothStateStream)
+  void listenToBluetoothState() {
+    _btStateSub?.cancel();
+    try {
+      _btStateSub = BluetoothService.bluetoothStateStream.listen((state) {
+        log("📡 Bluetooth state (native): $state");
+
+        final s = state.toLowerCase();
+        final enabled = s.contains("on") || s == "enabled";
+
+        // update reactive
+        final prev = isEnabled.value;
+        isEnabled.value = enabled;
+
+        // jika perubahan: lakukan tindakan
+        if (prev != enabled) {
+          if (!enabled) {
+            // Bluetooth dimatikan
+            isConnected.value = false;
+            selectedDevice.value = null; // 🔄 reset device
+            // Cancel connection/data listeners jika ada
+            _connSub?.cancel();
+            _dataSub?.cancel();
+
+            // Tutup dialog jika ada
+            if (Get.isDialogOpen == true) {
+              Get.back();
+            }
+            log("📡 Bluetooth state changed: $enabled (prev: $prev)");
+            // Tampilkan snackbar / info
+            showSnackBar(
+                'Bluetooth telah nonaktif. Aktifkan kembali untuk melanjutkan.');
+          } else {
+            // Bluetooth diaktifkan
+            showSnackBar('Bluetooth telah diaktifkan.');
+          }
+        }
+      }, onError: (err) {
+        log("❌ listenToBluetoothState error: $err");
+      });
+    } catch (e) {
+      log("❌ listenToBluetoothState exception: $e");
     }
   }
 
@@ -207,13 +252,13 @@ class Bt14CtrlController extends GetxController {
   /// Syncronous Funtion List
   void changeTod(TimeOfDay value) {
     final now = DateTime.now();
-    selectedtod.value =
+    selectedtod.text =
         '${value.hour}:${value.minute}:${now.second.toString().padLeft(2, '0')}';
   }
 
   void changeDt(DateTime value) {
     final formatter = DateFormat('yyyy-MM-dd');
-    selectedDt.value = formatter.format(value);
+    selectedDt.text = formatter.format(value);
     // selectedDt.value = '${value.day}/${value.month}/${value.year}';
   }
 
@@ -227,8 +272,12 @@ class Bt14CtrlController extends GetxController {
   }
 
   Future<void> checkEnabled() async {
+    log("⚙️ checkEnabled() mulai dipanggil");
     try {
-      isEnabled.value = await FlutterBluetoothClassic.isBluetoothEnabled();
+      final enabled = await FlutterBluetoothClassic.isBluetoothEnabled();
+      log("📡 Hasil native: $enabled");
+      isEnabled.value = enabled;
+      log("✅ isEnabled.value di-set: ${isEnabled.value}");
     } catch (e) {
       log("❌ checkEnabled error: $e");
       isEnabled.value = false;
@@ -237,9 +286,9 @@ class Bt14CtrlController extends GetxController {
 
   Future<void> getPairedDevices() async {
     try {
-      final list = await FlutterBluetoothClassic.getPairedDevices();
-      devices.value = list.map((d) => BluetoothDevice.fromMap(d)).toList();
-      for (var d in devices) {
+      final list = await _getPairedDevicesUseCase();
+      devices.value = list;
+      for (var d in list) {
         log("✅ Paired: ${d.name} (${d.address})");
       }
     } catch (e) {
@@ -248,9 +297,8 @@ class Bt14CtrlController extends GetxController {
   }
 
   Future<void> connectDialog() async {
-    if (selectedDevice == null) return;
+    if (selectedDevice.value == null) return;
 
-    // Tampilkan dialog loading
     Get.dialog(
       Dialog(
         insetPadding:
@@ -271,47 +319,71 @@ class Bt14CtrlController extends GetxController {
     );
 
     try {
-      log("🔗 Connecting to ${selectedDevice!.address} ...");
-      final ok = await FlutterBluetoothClassic.connectInsecure(
-        selectedDevice!.address,
-      );
-
-      if (ok) {
-        isConnected.value = true;
-        log("✅ Connected to ${selectedDevice!.name}");
-
-        // Reset handshake flag
-        handshakeDone.value = false;
-
-        // Init listener baru setelah connect
-        _initListeners();
-
-        // kasih jeda sebentar sebelum handshake
-        await Future.delayed(const Duration(milliseconds: 500));
-
-        // kirim handshake
-        final sent = await FlutterBluetoothClassic.write("y");
-        log("📤 Handshake sent: $sent");
-
-        if (sent) {
-          // tunggu response JSON valid (max 5 detik)
-          final success = await _waitForHandshake(timeout: 5);
-          if (success) {
-            log("✅ Handshake berhasil, device siap");
-            await saveDeviceInf();
-          } else {
-            log("⚠️ Handshake timeout, tidak ada balasan dari device");
-            Get.snackbar("Error", "Perangkat tidak merespon handshake");
-          }
-        }
-      }
+      await _connectDeviceUseCase.execute(selectedDevice.value!);
+      isConnected.value = true;
+      handshakeDone.value = true;
     } catch (e) {
-      log("❌ connectDevice error: $e");
       isConnected.value = false;
+      Get.snackbar("Error", e.toString());
+      log("❌ connectDialog error: $e");
+    } finally {
+      if (Get.isDialogOpen == true) Get.back();
+    }
+  }
+
+  /// 🔹 Fungsi untuk ambil semua data dari device
+  Future<void> fetchDeviceData() async {
+    if (!isConnected.value) {
+      Get.snackbar("Error", "Device belum terhubung");
+      return;
     }
 
-    // Tutup dialog loading
-    if (Get.isDialogOpen == true) Get.back();
+    log("📡 Mengambil data dari device...");
+
+    try {
+      // Kirim beberapa perintah berurutan
+      await _sendDeviceCommand("y", desc: "Device Info");
+      await Future.delayed(const Duration(milliseconds: 300));
+      if (deviceInfo != null) {
+        await box.saveFPInfo(deviceInfo!);
+      }
+      await _sendDeviceCommand("9", desc: "WiFi Info");
+      await Future.delayed(const Duration(milliseconds: 300));
+
+      await _sendDeviceCommand("I", desc: "URI Info");
+
+      log("✅ Semua data device berhasil diminta");
+    } catch (e) {
+      log("❌ fetchDeviceData error: $e");
+      Get.snackbar("Error", e.toString());
+    }
+  }
+
+  // 🔹 Fungsi untuk mengabil informasi Device
+  Future<void> _sendDeviceCommand(String command, {String? desc}) async {
+    try {
+      log("📤 Mengirim perintah ${desc ?? command} ($command)...");
+
+      // 🔹 Kirim perintah ke device
+      await _executeWithPermission(() async {
+        await _sendCommandUseCase.call(
+          data: command,
+          desc: desc,
+        );
+      });
+
+      // 🔹 Tunggu respons handshake dari device
+      final success = await _waitForHandshake(timeout: 5);
+
+      if (success) {
+        log("✅ Respons diterima untuk ${desc ?? command}");
+      } else {
+        log("⚠️ Timeout menunggu respons ${desc ?? command}");
+      }
+    } catch (e) {
+      log("❌ _sendDeviceCommand error: $e");
+      rethrow;
+    }
   }
 
   // Fungsi tunggu handshake selesai
@@ -328,13 +400,10 @@ class Bt14CtrlController extends GetxController {
   Future<void> disconnectDevice() async {
     try {
       log("🔌 Disconnecting from device...");
-
-      // Disconnect dari device
-      await FlutterBluetoothClassic.disconnect();
+      await _disconnectDeviceUseCase(); // pakai usecase
     } catch (e) {
       log("❌ Error saat disconnect: $e");
     } finally {
-      // Cancel listener supaya tidak nyangkut
       await _stateSub?.cancel();
       await _connSub?.cancel();
       await _dataSub?.cancel();
@@ -343,7 +412,6 @@ class Bt14CtrlController extends GetxController {
       _connSub = null;
       _dataSub = null;
 
-      // Reset semua flag dan buffer
       isConnected.value = false;
       handshakeDone.value = false;
       isDone.value = false;
@@ -351,412 +419,230 @@ class Bt14CtrlController extends GetxController {
       listInsertTemplate.clear();
       resultCounter.value = 0;
 
-      // Cancel timer idle supaya tidak ke-trigger di background
       _idleTimer?.cancel();
 
-      // Kasih delay sebentar supaya socket benar-benar lepas
       await Future.delayed(const Duration(milliseconds: 300));
 
       log("✅ Device disconnected, listener & state reset");
     }
   }
 
+  //
   Future<void> scanDevices() async {
-    await _discoverySub?.cancel(); // cancel dulu biar bisa scan ulang
-    devices.clear();
-    isDiscovering.value = true;
+    await _scanDeviceUc.checkPermission(() async {
+      log('🚀 scanDevices (clean version)');
+      await _scanDeviceUc.cancel(); // cancel scan sebelumnya
 
-    try {
-      FlutterBluetoothClassic.startDiscovery().listen((device) {
-        log("📡 Found: ${device['name']} (${device['address']})");
+      // Bersihkan semua list agar hasil fresh
+      devices.clear();
+      bondedDevices.clear();
+      unBondedDevices.clear();
+      owlDevices.clear();
 
-        final d = BluetoothDevice.fromMap(device);
-        if (!devices.any((x) => x.address == d.address)) {
-          devices.add(d);
-        }
-      }, onError: (err) {
-        log("❌ scanDevices error: $err");
-      }, onDone: () {
-        log("✅ Selesai scanning");
+      isDiscovering.value = true;
+
+      try {
+        // Ambil paired devices (bonded list dari sistem)
+        final pairedList = await FlutterBluetoothClassic.getPairedDevices();
+        log("📡 Paired devices ditemukan: ${pairedList.length}");
+
+        _discoverySub = _scanDeviceUc.execute().listen((device) {
+          log("📍 Found: ${device.name} (${device.address})");
+
+          // 🔍 Cegah duplikat di semua list
+          bool alreadyExists(String addr) =>
+              devices.any((x) => x.address == addr) ||
+              bondedDevices.any((x) => x.address == addr) ||
+              unBondedDevices.any((x) => x.address == addr) ||
+              owlDevices.any((x) => x.address == addr);
+
+          if (alreadyExists(device.address)) return;
+
+          // Tambahkan ke list utama
+          devices.add(device);
+
+          // 🔎 Cek apakah termasuk paired / OWL
+          final isPaired = pairedList.any(
+            (p) => p['address']?.toString() == device.address.toString(),
+          );
+
+          final isOwl = device.name.toUpperCase().contains("OWL") ||
+              device.address.toUpperCase().contains("OWL");
+
+          // Buat entitas device baru
+          final newEntity = BluetoothDeviceEntity(
+            name: device.name,
+            address: device.address,
+            bonded: isPaired,
+          );
+
+          // 💡 Klasifikasi sesuai kategori
+          if (isOwl) {
+            owlDevices.add(newEntity);
+          }
+          if (isPaired) {
+            bondedDevices.add(newEntity);
+          } else {
+            unBondedDevices.add(newEntity);
+          }
+        }, onError: (err) {
+          log("❌ scanDevices error: $err");
+        }, onDone: () {
+          log("✅ Selesai scanning");
+          log("📊 bonded: ${bondedDevices.length}, unbonded: ${unBondedDevices.length}, owl: ${owlDevices.length}");
+          isDiscovering.value = false;
+        });
+      } catch (e) {
+        log("❌ scanDevices exception: $e");
         isDiscovering.value = false;
-      });
-    } catch (e) {
-      log("❌ scanDevices exception: $e");
-      isDiscovering.value = false;
-    }
+      }
+    });
   }
 
   Future<void> startDiscoverSequence() async {
     await checkSupport();
+
+    if (!isSupported.value) {
+      showSnackBar("Perangkat ini tidak mendukung Bluetooth.");
+      return;
+    }
+
     await checkEnabled();
+
+    // 🔹 Kalau belum aktif, minta user nyalakan dulu
+    if (!isEnabled.value) {
+      final confirm = await Get.dialog<bool>(
+        AlertDialog(
+          title: const Text("Bluetooth mati"),
+          content: const Text(
+              "Aktifkan Bluetooth untuk melanjutkan pemindaian perangkat."),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(result: false),
+              child: const Text("Batal"),
+            ),
+            TextButton(
+              onPressed: () => Get.back(result: true),
+              child: const Text("Aktifkan"),
+            ),
+          ],
+        ),
+      );
+
+      if (confirm == true) {
+        final ok = await FlutterBluetoothClassic.enableBluetooth();
+        if (!ok) {
+          showSnackBar("Bluetooth gagal diaktifkan, coba secara manual.");
+          return;
+        }
+
+        // Tunggu sedikit biar sistem update status
+        await Future.delayed(const Duration(seconds: 2));
+        await checkEnabled();
+        if (!isEnabled.value) {
+          showSnackBar("Bluetooth masih belum aktif.");
+          return;
+        }
+      } else {
+        showSnackBar("Bluetooth belum diaktifkan.");
+        return;
+      }
+    }
+
+    // 🚀 Bluetooth aktif, lanjut ke scanning
     await scanDevices();
   }
 
   // Bluetooth Functions Command List
   // 🔹 Fungsi untuk mengirim perintah yang ada pada UI Settings
   Future<void> settings(String auth, int id) async {
-    isDone.value = false;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.dialog(
-        Scaffold(
-          resizeToAvoidBottomInset: false,
-          body: Dialog(
-            insetPadding:
-                EdgeInsets.symmetric(horizontal: 0.1.sw, vertical: 0.2.sh),
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 24.h),
-                  Text("Mengirimkan perintah!.")
-                ],
-              ),
-            ),
-          ),
-        ),
-        barrierDismissible: false,
+    if (selectedDevice.value == null || !isConnected.value) {
+      Get.snackbar("Error", "Device belum terhubung");
+      return;
+    }
+
+    final data = switch (id) {
+      0 => "w\n${ssidNm.text}\np\n${ssidPw.text}\n?\n$auth",
+      1 => "u\n${waktuUploadCtrl.text}\n?\n$auth",
+      2 => "c\ngpsraw",
+      3 => "i\n${alamatServerCtrl.text}\n?\n$auth",
+      4 => "t\n${selectedDt.text} ${selectedtod.text}\n?\n$auth",
+      5 => "1\n${waktuDeleteCtrl.text}\n?\n$auth",
+      _ => "",
+    };
+    await _executeWithPermission(() async {
+      await _sendCommandUseCase.callWithUI(
+        data: data,
+        desc: "Setting Command",
+        doneFlag: isDone,
       );
     });
-    try {
-      String data = "";
-      switch (id) {
-        case 0:
-          data = "w\n${ssidNm.text}\np\n${ssidPw.text}\n?\n$auth";
-          break;
-        case 1:
-          data = "u\n${waktuUploadCtrl.text}\n?\n$auth";
-          break;
-        case 2:
-          data = "c\ngpsraw";
-          break;
-        case 3:
-          data = "i\n${alamatServerCtrl.text}\n?\n$auth";
-          break;
-        case 4:
-          data = "t\n${selectedDt.value} ${selectedtod.value}\n?\n$auth";
-          break;
-        case 5:
-          data = "1\n${waktuDeleteCtrl.text}\n?\n$auth";
-          break;
-      }
-      // Jalankan proses async
-      if (selectedDevice != null && isConnected.value) {
-        final ok = await FlutterBluetoothClassic.write(data);
-        if (!ok) {
-          Get.snackbar("Error", "Gagal mengirim data");
-        }
-      } else {
-        Get.snackbar("Error", "Device belum terhubung");
-      }
-    } catch (e) {
-      // Tampilkan error (jika perlu)
-      Get.snackbar("Error", e.toString());
-      if (Get.isDialogOpen == true) Get.back(); // ❗️Tutup jika error
-    }
-  }
-
-  // 🔹 Fungsi untuk mengabil informasi Device
-  Future<void> deviceInf() async {
-    try {
-      String data = "y"; // Contoh data
-      isDone.value = false;
-
-      if (selectedDevice != null && isConnected.value) {
-        final ok = await FlutterBluetoothClassic.write(data);
-        if (!ok) {
-          Get.snackbar("Error", "Gagal mengirim data");
-        }
-      } else {
-        Get.snackbar("Error", "Device belum terhubung");
-      }
-    } catch (e) {
-      Get.snackbar("Error", e.toString());
-      if (Get.isDialogOpen == true) Get.back(); // Tutup dialog kalau error
-    }
-  }
-
-  Future<void> saveDeviceInf() async {
-    if (isConnected.value && selectedDevice != null) {
-      // Kirim data
-      await deviceInf();
-
-      // Simpan info device kalau ada
-      if (deviceInfo != null) {
-        return box.saveFPInfo(deviceInfo!);
-      }
-    } else {
-      Get.snackbar("Error", "Device belum terhubung");
-    }
   }
 
   // 🔹 Fungsi untuk registrasi finger baru / hapus data finger
-  Future<void> regdelFinger(int index) async {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.dialog(
-        Dialog(
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  index == 0 ? 'Registrasi Fingerprint' : 'Delete Fingerprint',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16.sp,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                SizedBox(height: 24.h),
-                const CircularProgressIndicator(),
-                Visibility(visible: index == 0, child: SizedBox(height: 12.h)),
-                Visibility(
-                  visible: index == 0,
-                  child: Text('Silahkan letakan jari anda ke sensor!'),
-                ),
-              ],
-            ),
-          ),
-        ),
-        barrierDismissible: true,
+  // Registrasi / Delete Finger
+  Future<void> regDelFinger({
+    required bool isRegister,
+    required String nik,
+    required String name,
+    required String auth,
+  }) async {
+    final data = isRegister ? "r\n$nik\n$name\n?\n$auth" : "5\n$nik\n?\n$auth";
+    await _executeWithPermission(() async {
+      await _sendCommandUseCase.callWithUI(
+        data: data,
+        desc: isRegister ? "Registrasi Fingerprint" : "Hapus Fingerprint",
+        doneFlag: isDone,
       );
     });
-
-    try {
-      //! Regist
-      String regist =
-          "r\n$selectedRegisterNIK\n$selectedRegisterNm\n?\n$authText";
-      //! Delete
-      String delete = "5\n$selectedRegisterNIK\n?\n$authText";
-      String data = index == 0 ? regist : delete;
-
-      if (selectedDevice != null && isConnected.value) {
-        final ok = await FlutterBluetoothClassic.write(data);
-        if (!ok) {
-          Get.snackbar("Error", "Gagal mengirim data");
-        }
-      } else {
-        Get.snackbar("Error", "Device belum terhubung");
-      }
-    } catch (e) {
-      Get.snackbar("Error", e.toString());
-      if (Get.isDialogOpen == true) Get.back(); // ❗️Tutup jika error
-    }
-
-    // 🔹 Tunggu sampai proses selesai (isDone true)
-    await waitUntilDone(isDone);
-
-    if (Get.isDialogOpen == true) {
-      Get.back();
-      resetVariables();
-      log(authCtrl.text);
-    }
   }
 
   // 🔹 Fungsi untuk ambil template dari mesin fingerprint
   Future<void> getTemplateFromDevice(String args) async {
-    // Tampilkan dialog loading
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.dialog(
-        Dialog(
-          insetPadding:
-              EdgeInsets.symmetric(horizontal: 0.1.sw, vertical: 0.2.sh),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const CircularProgressIndicator(),
-                SizedBox(height: 24.h),
-                const Text("Menerima data dari fingerprint!."),
-              ],
-            ),
-          ),
-        ),
-        barrierDismissible: false,
+    await _executeWithPermission(() async {
+      await _sendCommandUseCase.callWithUI(
+        data: "7\n?\n$args",
+        desc: "Ambil Template",
+        doneFlag: isDone,
       );
     });
-
-    // Listener untuk isDone → close dialog kalau selesai
-    once(isDone, (done) {
-      if (done == true && Get.isDialogOpen == true) {
-        Get.back(); // ✅ Tutup dialog saat parsing udah idle
-      }
-    });
-
-    try {
-      //! String Sent!
-      String data = "7\n?\n$args";
-      log("Inquiry data: $data");
-      isDone.value = false; // reset sebelum mulai
-
-      if (selectedDevice != null && isConnected.value) {
-        final ok = await FlutterBluetoothClassic.write(data);
-        if (!ok) {
-          Get.snackbar("Error", "Gagal mengirim data");
-          if (Get.isDialogOpen == true) Get.back();
-        }
-      } else {
-        Get.snackbar("Error", "Device belum terhubung");
-        if (Get.isDialogOpen == true) Get.back();
-      }
-    } catch (e) {
-      Get.snackbar("Error", e.toString());
-      if (Get.isDialogOpen == true) Get.back();
-    }
   }
 
   // 🔹 Fungsi untuk mengirim template ke mesin by NIK
-  Future<void> sendTemplByNik(String nik, String template) async {
-    const int maxRetry = 3;
-    const Duration perAttemptTimeout = Duration(seconds: 10);
-    int attempt = 0;
-    bool success = false;
-
-    while (attempt < maxRetry && !success) {
-      attempt++;
-      log("📤 [Attempt $attempt/$maxRetry] Kirim template NIK: $nik");
-
-      final int baseResultCount = resultCounter.value; // baseline
-
-      try {
-        final data = "8\n$nik\n$template\n?\n$authText";
-
-        if (selectedDevice == null || !isConnected.value) {
-          Get.snackbar("Error", "Device belum terhubung");
-          return;
-        }
-
-        final ok = await FlutterBluetoothClassic.write(data);
-        if (!ok) {
-          log("❌ Write failed, akan retry (attempt $attempt)");
-          await Future.delayed(
-              const Duration(milliseconds: 300)); // sedikit jeda sebelum retry
-          continue; // retry
-        }
-
-        // tunggu sampai resultCounter berubah (-> device balas) atau timeout
-        final start = DateTime.now();
-        var gotResponse = false;
-        while (DateTime.now().difference(start) < perAttemptTimeout) {
-          await Future.delayed(const Duration(milliseconds: 150));
-          if (resultCounter.value > baseResultCount) {
-            gotResponse = true;
-            break;
-          }
-        }
-
-        if (gotResponse) {
-          log("✅ Device merespon untuk NIK $nik (attempt $attempt)");
-          success = true;
-        } else {
-          log("⚠️ Timeout menunggu respon untuk NIK $nik (attempt $attempt)");
-          // optional: reconnect logic or small delay before retry
-          await Future.delayed(const Duration(milliseconds: 300));
-        }
-      } catch (e, st) {
-        log("❌ Exception saat mengirim NIK $nik: $e\n$st");
-        await Future.delayed(const Duration(milliseconds: 300));
-      }
-    }
-
-    if (!success) {
-      log("🚨 Gagal kirim template untuk NIK: $nik setelah $maxRetry percobaan");
-      // opsi: laporkan error, simpan ke queue, dsb.
-    }
+  Future<void> sendTemplateByNIK(
+      String nik, String template, String auth) async {
+    await _executeWithPermission(() async {
+      await _sendCommandUseCase.callWithUI(
+        data: "8\n$nik\n$template\n?\n$auth",
+        desc: "Kirim Template $nik",
+        resultCounter: resultCounter,
+        useRetry: true,
+        maxRetry: 3,
+        successMsg: "Template untuk $nik berhasil dikirim",
+      );
+    });
   }
 
   // 🔹 Fungsi untuk merubah PIN
-  Future<void> gantiPIN(String arg, String auth) async {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.dialog(
-        Dialog(
-          insetPadding:
-              EdgeInsets.symmetric(horizontal: 0.1.sw, vertical: 0.2.sh),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 24.h),
-                Text("Mengirimkan perintah!.")
-              ],
-            ),
-          ),
-        ),
-        barrierDismissible: false,
+  Future<void> gantiPIN(String newPin, String auth) async {
+    await _executeWithPermission(() async {
+      await _sendCommandUseCase.callWithUI(
+        data: "x\n$newPin\n?\n$auth",
+        desc: "Ganti PIN",
+        doneFlag: isDone,
       );
     });
-    ever(isDone, (registered) async {
-      if (registered == true && Get.isDialogOpen == true) {
-        Get.back(); // menutup dialog
-        isDone.value = false;
-      }
-    });
-    // String data = "v\n$selectedRegisterNIK\n?\n$auth";
-    String data = "x\n$arg\n?\n$auth";
-    log("Mengganti PIN: $arg, String: $data");
-    try {
-      if (selectedDevice != null && isConnected.value) {
-        final ok = await FlutterBluetoothClassic.write(data);
-        if (!ok) {
-          Get.snackbar("Error", "Gagal mengirim data");
-        }
-      } else {
-        Get.snackbar("Error", "Device belum terhubung");
-      }
-    } catch (e) {
-      Get.snackbar("Error", e.toString());
-      if (Get.isDialogOpen == true) Get.back(); // ❗️Tutup jika error
-    }
   }
 
   // 🔹 Fungsi untuk menambahkan hak akses admin
-  Future<void> addAdminPrivilages(String arg, String auth) async {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Get.dialog(
-        Dialog(
-          insetPadding:
-              EdgeInsets.symmetric(horizontal: 0.1.sw, vertical: 0.2.sh),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 24.h),
-                Text("Mengirimkan perintah!.")
-              ],
-            ),
-          ),
-        ),
-        barrierDismissible: false,
+  Future<void> addAdminPrivileges(String arg, String auth, String nik) async {
+    await _executeWithPermission(() async {
+      await _sendCommandUseCase.callWithUI(
+        data: "v\n$nik\n$arg\n?\n$auth",
+        desc: "Tambah Admin",
+        doneFlag: isDone,
       );
     });
-    ever(isDone, (registered) async {
-      if (registered == true && Get.isDialogOpen == true) {
-        Get.back(); // menutup dialog
-        isDone.value = false;
-      }
-    });
-    // String data = "v\n$selectedRegisterNIK\n?\n$auth";
-    String data = "v\n$selectedRegisterNIK\n$arg\n?\n$auth";
-    log("Nambah Admin dengan NIK: $selectedRegisterNIK, String: $data");
-    try {
-      if (selectedDevice != null && isConnected.value) {
-        final ok = await FlutterBluetoothClassic.write(data);
-        if (!ok) {
-          Get.snackbar("Error", "Gagal mengirim data");
-        }
-      } else {
-        Get.snackbar("Error", "Device belum terhubung");
-      }
-    } catch (e) {
-      Get.snackbar("Error", e.toString());
-      if (Get.isDialogOpen == true) Get.back(); // ❗️Tutup jika error
-    }
   }
 
   // Reset All Variables
@@ -775,6 +661,76 @@ class Bt14CtrlController extends GetxController {
     isDone.value = false;
     listInsertTemplate.clear();
     bufferProcess.value = false;
+  }
+
+  // 🔹 Fungsi untuk merubah PIN
+  Future<void> resetFactory() async {
+    if (selectedDevice.value == null || !isConnected.value) {
+      Get.snackbar("Error", "Device belum terhubung");
+      return;
+    }
+    await _executeWithPermission(() async {
+      await _sendCommandUseCase.callWithUI(
+        data: "n\n?\n$authText",
+        desc: "Reset Factory",
+        doneFlag: isDone,
+      );
+    });
+  }
+
+  Future<void> checkPermission(
+    Function onGranted, {
+    bool requireConnectedDevice = true,
+  }) async {
+    final permCtrl = Get.find<PermissionController>();
+
+    log("Selected: ${selectedDevice.value}, IsCon: ${isConnected.value}, ReqCon: $requireConnectedDevice");
+    await permCtrl.checkBtAdaptor();
+    if (!permCtrl.bluetoothAdaptor.value) {
+      showSnackBar("Adaptor Bluetooth tidak ditemukan atau belum aktif.");
+      return;
+    }
+
+    await permCtrl.requestBluetoothPermission();
+    if (!permCtrl.bluetoothGranted.value) {
+      showSnackBar("Mohon izinkan akses Bluetooth terlebih dahulu.");
+      return;
+    }
+
+    // 🔥 Cek koneksi hanya kalau dibutuhkan
+    if (requireConnectedDevice) {
+      if (selectedDevice.value == null || !isConnected.value) {
+        showSnackBar("Belum ada perangkat Bluetooth yang terhubung.");
+        return;
+      }
+    }
+
+    await onGranted();
+  }
+
+  Future<void> getBondedDevices() async {
+    try {
+      final pairedList = await FlutterBluetoothClassic.getPairedDevices();
+
+      // 🔄 Konversi hasil native (Map) ke entity
+      final entities =
+          pairedList.map((map) => BluetoothDeviceEntity.fromMap(map)).toList();
+
+      bondedDevices.value = entities;
+
+      // 🔍 Filter device yang mengandung kata "OWL" (case-insensitive)
+      final filtered =
+          entities.where((d) => d.name.toUpperCase().contains('OWL')).toList();
+
+      owlDevices.value = filtered;
+
+      log('✅ Paired devices ditemukan: ${entities.length}');
+      log('🦉 Ditemukan OWL devices: ${filtered.map((d) => d.name).toList()}');
+    } catch (e) {
+      log('❌ Gagal mengambil paired devices: $e');
+      bondedDevices.clear();
+      owlDevices.clear();
+    }
   }
 }
 

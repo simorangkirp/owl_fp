@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'controllers/setup.controller.dart';
 
 class SetupScreen extends GetView<SetupController> {
-  const SetupScreen({Key? key}) : super(key: key);
+  const SetupScreen({super.key});
   @override
   Widget build(BuildContext context) {
     return Scaffold(

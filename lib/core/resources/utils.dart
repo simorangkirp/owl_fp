@@ -26,16 +26,17 @@ Future<bool> isTokenExpired(String? datetime) async {
   }
 }
 
-showSnackBar(String msg) {
-  return Get.snackbar(
-    '',
-    msg,
-    titleText: const SizedBox.shrink(),
-    snackPosition: SnackPosition.BOTTOM,
+void showSnackBar(String msg) {
+  Get.rawSnackbar(
+    messageText: Text(
+      msg,
+      style: const TextStyle(color: Colors.white, fontSize: 14),
+    ),
     backgroundColor: Colors.black87,
-    colorText: Colors.white,
-    duration: const Duration(seconds: 2), // Supaya tidak hilang otomatis
+    snackPosition: SnackPosition.BOTTOM,
     margin: const EdgeInsets.all(12),
+    borderRadius: 8,
+    duration: const Duration(seconds: 2),
   );
 }
 

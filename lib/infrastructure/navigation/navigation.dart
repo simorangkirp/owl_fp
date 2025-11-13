@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:get/get.dart';
+import 'package:owl_fp_newer/infrastructure/navigation/bindings/bindings/bt14.controller.binding.dart';
 
 import '../../config.dart';
 import '../../presentation/screens.dart';
@@ -47,10 +48,12 @@ class Nav {
       binding: DashboardControllerBinding(),
     ),
     GetPage(
-      name: Routes.fingerprint,
-      page: () => const FingerprintScreen(),
-      binding: FingerprintControllerBinding(),
-    ),
+        name: Routes.fingerprint,
+        page: () => const FingerprintScreen(),
+        bindings: [
+          FingerprintControllerBinding(),
+          Bt14CtrlBinding(), // ⬅️ binding tambahan
+        ]),
     GetPage(
       name: Routes.setup,
       page: () => const SetupScreen(),

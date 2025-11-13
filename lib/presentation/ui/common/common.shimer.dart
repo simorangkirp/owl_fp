@@ -5,10 +5,10 @@ class CommonShimmer extends StatelessWidget {
   final Widget? child;
   final bool? isLoading;
   const CommonShimmer({
-    Key? key,
+    super.key,
     required this.child,
     required this.isLoading,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +18,7 @@ class CommonShimmer extends StatelessWidget {
           ? Shimmer.fromColors(
               key: const ValueKey('1'),
               period: const Duration(milliseconds: 900),
-              baseColor: Colors.grey.shade300.withOpacity(0.8),
+              baseColor: Colors.grey.shade300.withValues(alpha: 0.8),
               highlightColor: Colors.grey.shade100,
               child: child!,
             )

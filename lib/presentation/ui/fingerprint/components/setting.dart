@@ -1,8 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:owl_fp_newer/presentation/ui/common/container.ext.dart';
+import 'package:owl_fp_newer/core/resources/utils.dart';
+import 'package:owl_fp_newer/presentation/ui/common/app.textformfield.dart';
+import 'package:owl_fp_newer/presentation/ui/common/dialog.dart';
 
 import '../../../constant.dart';
 import '../controllers/bt14_ctrl_controller.dart';
@@ -15,192 +19,230 @@ class SettingComponents extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    opendialog(int index) {
-      return Get.dialog(
-        Dialog(
-          insetPadding:
-              EdgeInsets.symmetric(horizontal: 0.1.sw, vertical: 0.2.sh),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text("auth".tr),
-                SizedBox(height: 12.h),
-                Text("inputPassword".tr),
-                SizedBox(height: 8.h),
-                TextField(
-                  controller: controller.authDialogCtrl,
-                  onChanged: (value) {
-                    controller.authDialogArg = value;
-                  },
-                ),
-                SizedBox(height: 12.h),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    fixedSize: Size(double.maxFinite, 42.h),
-                  ),
-                  onPressed: () {
-                    controller.authDialogCtrl.clear();
-                    Get.back();
-                    btctrl.settings(controller.authDialogArg,
-                        controller.selectedSettingId.value);
-                  },
-                  child: Text('send'.tr),
-                ),
-              ],
+    final formWifiKey = GlobalKey<FormState>();
+    final formWUploadKey = GlobalKey<FormState>();
+    final formCSecretKey = GlobalKey<FormState>();
+    final formSAddressKey = GlobalKey<FormState>();
+    final formDtimeKey = GlobalKey<FormState>();
+    final formTDeleteKey = GlobalKey<FormState>();
+
+    Future<void> opendialog(int index) async {
+      // 🔹 Jalankan pengecekan permission dulu
+      await btctrl.checkPermission(() {
+        // 🔹 Tampilkan dialog global
+        showAuthDialog(
+          obsecure: controller.isPwObscured,
+          title: "auth".tr,
+          message: "inputPassword".tr,
+          controller: controller.authDialogCtrl,
+          onSubmit: () {
+            final password = controller.authDialogCtrl.text.trim();
+
+            if (password.isEmpty) {
+              showSnackBar("Password tidak boleh kosong!");
+              return;
+            }
+
+            controller.authDialogCtrl.clear();
+
+            // Jalankan fungsi utama kamu
+            btctrl.settings(password, controller.selectedSettingId.value);
+          },
+        );
+      });
+    }
+
+    Widget wifi() {
+      return Form(
+        key: formWifiKey,
+        child: Column(
+          children: [
+            TextFormField(
+              controller: btctrl.ssidNm,
+              decoration: const InputDecoration(
+                hintText: 'SSID',
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Kolom ini wajib di isi!';
+                }
+                return null;
+              },
             ),
-          ),
+            SizedBox(height: 8.h),
+            AppPasswordField(
+              controller: btctrl.ssidPw,
+              isObscured: btctrl.isPwObscured, // ini RxBool di controllermu
+              hintText: 'password'.tr,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Kolom ini wajib di isi!';
+                } else if (value.length < 8) {
+                  return 'Password minimal 8 karakter';
+                }
+                return null;
+              },
+            ),
+            SizedBox(height: 12.h),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                fixedSize: Size(double.maxFinite, 42.h),
+              ),
+              onPressed: () {
+                // ✅ cek validasi dulu
+                if (formWifiKey.currentState!.validate()) {
+                  // valid → baru jalanin logic
+                  opendialog(0);
+                }
+              },
+              child: Text('send'.tr),
+            ),
+          ],
         ),
       );
     }
 
-    Widget wifi() {
-      return Column(
-        children: [
-          TextField(
-            controller: btctrl.ssidNm,
-            decoration: const InputDecoration(
-              hintText: 'SSID',
-            ),
-          ),
-          SizedBox(height: 8.h),
-          TextField(
-            controller: btctrl.ssidPw,
-            decoration: InputDecoration(
-              hintText: 'password'.tr,
-            ),
-          ),
-          SizedBox(height: 12.h),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              fixedSize: Size(double.maxFinite, 42.h),
-            ),
-            onPressed: () {
-              opendialog(0);
-            },
-            child: Text('send'.tr),
-          ),
-        ],
-      );
-    }
-
     Widget tgljam() {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text("chsHour".tr),
-          SizedBox(height: 8.h),
-          InkWell(
-            onTap: () async {
-              final TimeOfDay? timeOfDay = await showTimePicker(
-                context: context,
-                initialTime: btctrl.tod,
-                initialEntryMode: TimePickerEntryMode.dial,
-              );
-              if (timeOfDay != null) {
-                btctrl.changeTod(timeOfDay);
-              }
-            },
-            child: Obx(
-              () => Container(
-                width: double.maxFinite,
-                padding: context.outlinedButtonPadding,
-                decoration: context.outlinedButtonBox,
-                child: Text(
-                  btctrl.selectedtod.value,
-                  style: TextStyle(fontSize: 14.sp),
-                ),
+      return Form(
+        key: formDtimeKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text("chsHour".tr),
+            SizedBox(height: 8.h),
+            TextFormField(
+              controller: btctrl.selectedtod,
+              readOnly: true,
+              onTap: () async {
+                final TimeOfDay? timeOfDay = await showTimePicker(
+                  context: context,
+                  initialTime: btctrl.tod,
+                  initialEntryMode: TimePickerEntryMode.dial,
+                );
+                if (timeOfDay != null) {
+                  btctrl.changeTod(timeOfDay);
+                }
+              },
+              decoration: const InputDecoration(
+                hintText: 'Pilih waktu',
               ),
+              validator: (value) {
+                log("Jam :$value");
+                if (value == null || value.isEmpty || value == 'hh:ss') {
+                  return 'Kolom ini wajib di isi!';
+                }
+                return null;
+              },
             ),
-          ),
-          SizedBox(height: 12.h),
-          Text("chsDt".tr),
-          SizedBox(height: 8.h),
-          InkWell(
-            onTap: () async {
-              final DateTime? date = await showDatePicker(
+            SizedBox(height: 12.h),
+            Text("chsDt".tr),
+            SizedBox(height: 8.h),
+            TextFormField(
+              controller: btctrl.selectedDt,
+              readOnly: true,
+              onTap: () async {
+                final DateTime? date = await showDatePicker(
                   context: context,
                   initialDate: btctrl.dt,
                   firstDate: DateTime(1999),
-                  lastDate: DateTime(2100));
-              if (date != null) {
-                btctrl.changeDt(date);
-              }
-            },
-            child: Obx(
-              () => Container(
-                width: double.maxFinite,
-                padding: context.outlinedButtonPadding,
-                decoration: context.outlinedButtonBox,
-                child: Text(
-                  btctrl.selectedDt.value,
-                  style: TextStyle(fontSize: 14.sp),
-                ),
+                  lastDate: DateTime(2100),
+                );
+                if (date != null) {
+                  btctrl.changeDt(date);
+                }
+              },
+              decoration: const InputDecoration(
+                hintText: 'Pilih tanggal',
               ),
+              validator: (value) {
+                if (value == null || value.isEmpty || value == 'dd/MM/yyyy') {
+                  return 'Kolom ini wajib di isi!';
+                }
+                return null;
+              },
             ),
-          ),
-          SizedBox(height: 12.h),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              fixedSize: Size(double.maxFinite, 42.h),
+            SizedBox(height: 12.h),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                fixedSize: Size(double.maxFinite, 42.h),
+              ),
+              onPressed: () {
+                // ✅ cek validasi dulu
+                if (formDtimeKey.currentState!.validate()) {
+                  // valid → baru jalanin logic
+                  opendialog(4);
+                }
+              },
+              child: Text('send'.tr),
             ),
-            onPressed: () {
-              opendialog(4);
-            },
-            child: Text('send'.tr),
-          ),
-        ],
+          ],
+        ),
       );
     }
 
     Widget waktuDelete() {
-      return Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                  child: TextField(
-                controller: btctrl.waktuDeleteCtrl,
-              )),
-              SizedBox(width: 24.w),
-              Expanded(
-                child: Obx(
-                  () => DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
+      return Form(
+        key: formTDeleteKey,
+        child: Column(
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                    child: TextFormField(
+                  controller: btctrl.waktuDeleteCtrl,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Kolom ini wajib di isi!';
+                    }
+                    return null;
+                  },
+                )),
+                SizedBox(width: 24.w),
+                Expanded(
+                  child: Obx(
+                    () => DropdownButtonFormField<String>(
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
+                      ),
+                      value: controller.timeOpt.first,
+                      items: controller.timeOpt
+                          .map((option) => DropdownMenuItem(
+                                value: option,
+                                child: Text(option),
+                              ))
+                          .toList(),
+                      onChanged: (value) {
+                        controller.selectedTime.value = value ?? "";
+                      },
+                      validator: (value) {
+                        if (value == null) {
+                          return 'plSlcOpt'.tr;
+                        }
+                        return null;
+                      },
                     ),
-                    value: controller.timeOpt.first,
-                    items: controller.timeOpt
-                        .map((option) => DropdownMenuItem(
-                              value: option,
-                              child: Text(option),
-                            ))
-                        .toList(),
-                    onChanged: (value) {
-                      controller.selectedTime.value = value ?? "";
-                    },
-                    validator: (value) {
-                      if (value == null) {
-                        return 'plSlcOpt'.tr;
-                      }
-                      return null;
-                    },
                   ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              fixedSize: Size(double.maxFinite, 42.h),
+              ],
             ),
-            onPressed: () {},
-            child: Text('send'.tr),
-          ),
-        ],
+            SizedBox(height: 12.h),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                fixedSize: Size(double.maxFinite, 42.h),
+              ),
+              onPressed: () {
+                // ✅ cek validasi dulu
+                if (formTDeleteKey.currentState!.validate()) {
+                  // valid → baru jalanin logic
+                  // opendialog(4);
+                }
+              },
+              child: Text('send'.tr),
+            ),
+          ],
+        ),
       );
     }
 
@@ -221,76 +263,119 @@ class SettingComponents extends StatelessWidget {
     }
 
     Widget serveruri() {
-      return Column(
-        children: [
-          TextField(
-            controller: btctrl.alamatServerCtrl,
-          ),
-          SizedBox(height: 12.h),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              fixedSize: Size(double.maxFinite, 42.h),
+      return Form(
+        key: formSAddressKey,
+        child: Column(
+          children: [
+            TextFormField(
+              controller: btctrl.alamatServerCtrl,
+              decoration: const InputDecoration(
+                hintText: 'Alamat Server',
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Kolom ini wajib di isi!';
+                }
+                return null;
+              },
             ),
-            onPressed: () {
-              opendialog(3);
-            },
-            child: Text('send'.tr),
-          ),
-        ],
+            SizedBox(height: 12.h),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                fixedSize: Size(double.maxFinite, 42.h),
+              ),
+              onPressed: () {
+                // ✅ cek validasi dulu
+                if (formSAddressKey.currentState!.validate()) {
+                  // valid → baru jalanin logic
+                  opendialog(3);
+                }
+              },
+              child: Text('send'.tr),
+            ),
+          ],
+        ),
       );
     }
 
     Widget waktuUpload() {
-      return Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                  child: TextField(
-                controller: btctrl.waktuUploadCtrl,
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly, // Hanya angka 0-9
-                ],
-              )),
-              SizedBox(width: 12.w),
-              Text("minute".tr),
-            ],
-          ),
-          SizedBox(height: 12.h),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              fixedSize: Size(double.maxFinite, 42.h),
+      return Form(
+        key: formWUploadKey,
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    controller: btctrl.waktuUploadCtrl,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly, // Hanya angka 0-9
+                    ],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Kolom ini wajib di isi!';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+                SizedBox(width: 12.w),
+                Text("minute".tr),
+              ],
             ),
-            onPressed: () {
-              opendialog(1);
-            },
-            child: Text('send'.tr),
-          ),
-        ],
+            SizedBox(height: 12.h),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                fixedSize: Size(double.maxFinite, 42.h),
+              ),
+              onPressed: () {
+                // ✅ cek validasi dulu
+                if (formWUploadKey.currentState!.validate()) {
+                  // valid → baru jalanin logic
+                  opendialog(1);
+                }
+              },
+              child: Text('send'.tr),
+            ),
+          ],
+        ),
       );
     }
 
     Widget clientsecret() {
-      return Column(
-        children: [
-          TextField(
-            controller: btctrl.clientIDCtrl,
-            decoration: const InputDecoration(
-              hintText: 'Client Secret',
+      return Form(
+        key: formCSecretKey,
+        child: Column(
+          children: [
+            TextFormField(
+              controller: btctrl.clientIDCtrl,
+              decoration: const InputDecoration(
+                hintText: 'Client Secret',
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Kolom ini wajib di isi!';
+                }
+                return null;
+              },
             ),
-          ),
-          SizedBox(height: 12.h),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              fixedSize: Size(double.maxFinite, 42.h),
+            SizedBox(height: 12.h),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                fixedSize: Size(double.maxFinite, 42.h),
+              ),
+              onPressed: () {
+                // ✅ cek validasi dulu
+                if (formCSecretKey.currentState!.validate()) {
+                  // valid → baru jalanin logic
+                  opendialog(2);
+                }
+              },
+              child: Text('send'.tr),
             ),
-            onPressed: () {
-              opendialog(2);
-            },
-            child: Text('send'.tr),
-          ),
-        ],
+          ],
+        ),
       );
     }
 

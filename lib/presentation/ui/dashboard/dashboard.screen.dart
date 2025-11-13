@@ -60,7 +60,7 @@ class DashboardScreen extends StatelessWidget {
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
                                           color: const Color(0xff009688)
-                                              .withOpacity(0.2),
+                                              .withValues(alpha: 0.2),
                                         ),
                                         padding: EdgeInsets.all(12.w),
                                         child: Icon(

@@ -7,7 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'controllers/sampletext.controller.dart';
 
 class SampletextScreen extends GetView<SampletextController> {
-  const SampletextScreen({Key? key}) : super(key: key);
+  const SampletextScreen({super.key});
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).textTheme;

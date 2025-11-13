@@ -35,6 +35,12 @@ class FlutterBluetoothClassic {
     return _dataStream!;
   }
 
+  /// 🚀 Munculkan prompt untuk menyalakan Bluetooth (via system dialog)
+  static Future<bool> enableBluetooth() async {
+    final ok = await _method.invokeMethod('enableBluetooth');
+    return ok == true;
+  }
+
   /// 📡 Stream status Bluetooth: 'enabled', 'disabled', 'unsupported'
   static Stream<String> onStateChanged() {
     _stateStream ??=

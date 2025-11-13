@@ -1,17 +1,17 @@
-import 'dart:async';
-import 'dart:convert';
-import 'dart:developer';
-import 'dart:typed_data';
+// import 'dart:async';
+// import 'dart:convert';
+// import 'dart:developer';
+// import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 // import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
+// import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:owl_fp_newer/presentation/ui/fingerprint/controllers/fingerprint.controller.dart';
+// import 'package:google_fonts/google_fonts.dart';
+// import 'package:owl_fp_newer/presentation/ui/fingerprint/controllers/fingerprint.controller.dart';
 
-import '../../../../data/dal/services/get.storage.dart';
-import 'package:flutter_bluetooth_classic_serial/flutter_bluetooth_classic.dart';
+// import '../../../../data/dal/services/get.storage.dart';
+// import 'package:flutter_bluetooth_classic_serial/flutter_bluetooth_classic.dart';
 
 class BluetoothController extends GetxController {
   // var devices = <BluetoothDevice>[].obs;

@@ -19,6 +19,12 @@ class StorageService {
   static const String appthemeKey = 'appTheme';
   static const String applangKey = 'appLang';
 
+  // Default Value Keys
+  static const String dvUriKey = 'dvuri';
+  static const String dvUploadKey = 'dvupload';
+  static const String dvClientKey = 'dvclient';
+  static const String dvDelAbsentKey = 'dvdelabsent';
+
   // Fingerprint Keys
   static const String condevSNKey = 'fpsn';
   static const String condevNameKey = 'fpname';

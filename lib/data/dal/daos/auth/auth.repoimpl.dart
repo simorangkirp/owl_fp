@@ -32,33 +32,62 @@ class AuthRepositoryImpl implements AuthRepository {
 
       switch (statusCode) {
         case HttpStatus.ok:
-          final result = data['result'];
-          final box = StorageService.instance;
+          // ✅ 2️⃣ Pastikan `data` tipe Map
+          if (data is! Map) {
+            return const DataError(
+                "Format respons server tidak sesuai (bukan JSON).");
+          }
 
-          box.saveToken(result['api_key']);
-          box.saveKebun(result['kodeorg']);
-          box.saveExpKey(result['explogin']);
-          box.saveIsLoggedIn(true);
+          if (data["error"]) {
+            return DataError(data["message"]);
+          } else {
+            final result = data['result'];
+            if (result == null) {
+              return const DataError(
+                  "Respons server tidak memiliki field 'result'.");
+            }
 
-          log("Login success. Token expiry: ${result['explogin']}");
+            final box = StorageService.instance;
+            box.saveToken(result['api_key']);
+            box.saveKebun(result['kodeorg']);
+            box.saveExpKey(result['explogin']);
+            box.saveIsLoggedIn(true);
 
-          return DataSuccess(data);
+            log("Login success. Token expiry: ${result['explogin']}");
+
+            return DataSuccess(data);
+          }
 
         case HttpStatus.requestTimeout:
           return const DataError("Request timeout");
-
+        case 302:
+          return const DataError(
+              "Periksa base URL atau endpoint API yang digunakan.");
         default:
           log("Unhandled status code: $statusCode");
           return DataError(data);
       }
     } on DioError catch (e) {
+      log("DioError: ${e.message}");
+
       if (e.type == DioErrorType.connectTimeout ||
           e.type == DioErrorType.receiveTimeout) {
         return const DataError("Connection Timeout");
       }
-      return DataError(e); // langsung lempar DioError
+
+      if (e.error is SocketException) {
+        return const DataError(
+            "Tidak dapat terhubung ke server. Periksa URL atau koneksi internet Anda.");
+      }
+
+      if (e.error is HandshakeException) {
+        return const DataError(
+            "Gagal melakukan koneksi aman (SSL). Pastikan URL benar dan sertifikat valid.");
+      }
+
+      return DataError(e.message);
     } catch (e) {
-      return DataError(e.toString());
+      return DataError("Unexpected error: $e");
     }
   }
 
@@ -97,7 +126,7 @@ class AuthRepositoryImpl implements AuthRepository {
           e.type == DioErrorType.receiveTimeout) {
         return const DataError("Connection Timeout");
       }
-      return DataError(e);
+      return DataError(e.message);
     } catch (e) {
       return DataError(e.toString());
     }
@@ -131,7 +160,7 @@ class AuthRepositoryImpl implements AuthRepository {
           e.type == DioErrorType.receiveTimeout) {
         return const DataError("Connection Timeout");
       }
-      return DataError(e);
+      return DataError(e.message);
     } catch (e) {
       return DataError(e.toString());
     }

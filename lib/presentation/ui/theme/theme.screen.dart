@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'controllers/theme.controller.dart';
 
 class ThemeScreen extends GetView<ThemeController> {
-  const ThemeScreen({Key? key}) : super(key: key);
+  const ThemeScreen({super.key});
   @override
   Widget build(BuildContext context) {
     return Scaffold(

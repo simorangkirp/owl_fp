@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'controllers/help.controller.dart';
 
 class HelpScreen extends GetView<HelpController> {
-  const HelpScreen({Key? key}) : super(key: key);
+  const HelpScreen({super.key});
   @override
   Widget build(BuildContext context) {
     return Scaffold(

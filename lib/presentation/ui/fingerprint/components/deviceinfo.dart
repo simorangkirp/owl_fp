@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:owl_fp_newer/core/resources/utils.dart';
+import 'package:owl_fp_newer/presentation/ui/common/dialog.dart';
 import 'package:owl_fp_newer/presentation/ui/common/expandable.widget.dart';
 
 import '../../../constant.dart';
@@ -16,49 +18,32 @@ class DeviceInfoComponent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var theme = Theme.of(context);
-    opendialog(int index) {
-      return Get.bottomSheet(
-        Container(
-          margin: EdgeInsets.symmetric(vertical: 0.1.sh, horizontal: 0.1.sw),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            color: Theme.of(context).scaffoldBackgroundColor,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text("auth".tr),
-                SizedBox(height: 12.h),
-                Text("inputPassword".tr),
-                SizedBox(height: 8.h),
-                TextField(
-                  controller: controller.authDialogCtrl,
-                  onChanged: (value) {
-                    controller.authDialogArg = value;
-                  },
-                ),
-                SizedBox(height: 12.h),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    fixedSize: Size(double.maxFinite, 42.h),
-                  ),
-                  onPressed: () {
-                    controller.authDialogCtrl.clear();
-                    Get.back();
-                    if (index == 1) {
-                      // btctrl.resetFactory(controller.authDialogArg);
-                    }
-                  },
-                  child: Text('send'.tr),
-                ),
-              ],
-            ),
-          ),
-        ),
-        isScrollControlled: true, // 👈 biar naik waktu keyboard muncul
-      );
+    Future<void> opendialog(int index) async {
+      await controller.checkPermission(() {
+        // 🔹 Panggil dialog global
+        showAuthDialog(
+          obsecure: controller.isPwObscured,
+          title: "auth".tr,
+          message: "inputPassword".tr,
+          controller: controller.authDialogCtrl,
+          onSubmit: () {
+            final password = controller.authDialogCtrl.text.trim();
+
+            if (password.isEmpty) {
+              showSnackBar("Password tidak boleh kosong!");
+              return;
+            }
+
+            Get.back(); // Tutup dialog
+            btctrl.authText = controller.authDialogCtrl.text;
+            controller.authDialogCtrl.clear();
+
+            if (index == 1) {
+              btctrl.resetFactory();
+            }
+          },
+        );
+      });
     }
 
     resetLogAbsen() {
@@ -103,7 +88,9 @@ class DeviceInfoComponent extends StatelessWidget {
                       ),
                       SizedBox(height: 12.h),
                       ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          opendialog(0);
+                        },
                         child: Text('send'.tr),
                       ),
                     ],
@@ -185,6 +172,7 @@ class DeviceInfoComponent extends StatelessWidget {
       );
     }
 
+    /// ✅ Fungsi send template ke server
     sendTemplateToServer() {
       return Column(
         children: [
@@ -201,71 +189,72 @@ class DeviceInfoComponent extends StatelessWidget {
                   style: theme.textTheme.labelLarge!
                       .copyWith(fontWeight: FontWeight.w600),
                 ),
-                Icon(LucideIcons.chevronDown),
+                const Icon(LucideIcons.chevronDown),
               ],
             ),
           ),
           Obx(
             () => ExpandableWidget(
               expand: controller.devinfSendTmplt.value,
-              child: Column(
-                children: [
-                  SizedBox(height: 4.h),
-                  Icon(
-                    LucideIcons.uploadCloud,
-                    size: 48.h,
-                    // color: Colors.black.withAlpha((0.6 * 255).toInt()),
-                    color: ConstColor.gTurquoise,
-                  ),
-                  SizedBox(height: 8.h),
-                  Text(
-                    "sendTemptoServerDialog".tr,
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 12.h),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: DropdownButtonFormField<String>(
-                          style: Theme.of(context).textTheme.labelMedium,
-                          decoration: InputDecoration(
-                            contentPadding: ConstPadding.ddBtnPadding,
-                            border: const OutlineInputBorder(),
+              child: Form(
+                key: controller.formKeySendTemplateKey,
+                child: Column(
+                  children: [
+                    SizedBox(height: 4.h),
+                    Icon(LucideIcons.uploadCloud,
+                        size: 48.h, color: ConstColor.gTurquoise),
+                    SizedBox(height: 8.h),
+                    Text("sendTemptoServerDialog".tr,
+                        textAlign: TextAlign.center),
+                    SizedBox(height: 12.h),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            style: Theme.of(context).textTheme.labelMedium,
+                            decoration: InputDecoration(
+                              contentPadding: ConstPadding.ddBtnPadding,
+                              border: const OutlineInputBorder(),
+                            ),
+                            value: controller.selectedSN.value.isEmpty
+                                ? null
+                                : controller.selectedSN.value,
+                            items: controller.listSN
+                                .map((option) => DropdownMenuItem(
+                                      value: option,
+                                      child: Text(
+                                        option,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ))
+                                .toList(),
+                            onChanged: (value) {
+                              controller.selectedSN.value = value ?? "";
+                            },
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'plSlcOpt'.tr;
+                              }
+                              return null;
+                            },
                           ),
-                          // value: ctrl.listSN.first,
-                          value: null,
-                          items: controller.listSN
-                              .map((option) => DropdownMenuItem(
-                                    value: option,
-                                    child: Text(
-                                      option,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ))
-                              .toList(),
-                          onChanged: (value) {
-                            controller.selectedSN.value = value ?? "";
-                            // ctrl.undselectedMenuIndex.value = ctrl.listSN.indexOf(value);
-                            // log('${ctrl.listSN.indexOf(value)}');
-                          },
-                          validator: (value) {
-                            if (value == null) {
-                              return 'plSlcOpt'.tr;
-                            }
-                            return null;
-                          },
                         ),
-                      ),
-                      SizedBox(width: 12.w),
-                      ElevatedButton(
-                        onPressed: () {
-                          controller.uploadTempToServerDialog();
-                        },
-                        child: Text('send'.tr),
-                      ),
-                    ],
-                  ),
-                ],
+                        SizedBox(width: 12.w),
+                        ElevatedButton(
+                          onPressed: () {
+                            final form =
+                                controller.formKeySendTemplateKey.currentState;
+                            if (form != null && form.validate()) {
+                              // ✅ valid → lanjut
+                              controller.uploadTempToServerDialog();
+                            }
+                          },
+                          child: Text('send'.tr),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

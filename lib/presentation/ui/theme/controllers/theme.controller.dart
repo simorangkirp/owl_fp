@@ -1,8 +1,6 @@
 import 'package:get/get.dart';
 
 class ThemeController extends GetxController {
-  //TODO: Implement ThemeController
-
   @override
   Future<void> onInit() async {
     super.onInit();

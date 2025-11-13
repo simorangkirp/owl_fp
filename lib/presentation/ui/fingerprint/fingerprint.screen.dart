@@ -11,7 +11,7 @@ import 'components/updown.dart';
 import 'controllers/fingerprint.controller.dart';
 
 class FingerprintScreen extends GetView<FingerprintController> {
-  const FingerprintScreen({Key? key}) : super(key: key);
+  const FingerprintScreen({super.key});
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(

@@ -8,7 +8,7 @@ import 'package:owl_fp_newer/presentation/constant.dart';
 import 'controllers/masterdata.controller.dart';
 
 class MasterdataScreen extends StatelessWidget {
-  MasterdataScreen({Key? key}) : super(key: key);
+  MasterdataScreen({super.key});
   final controller = Get.find<MasterdataController>();
   @override
   Widget build(BuildContext context) {

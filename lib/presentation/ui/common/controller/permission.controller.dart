@@ -1,0 +1,137 @@
+import 'dart:developer';
+
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:owl_fp_newer/core/resources/bt.native.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+class PermissionController extends GetxController {
+  final bluetoothGranted = false.obs;
+  final bluetoothAdaptor = false.obs;
+
+  Future<void> checkBtAdaptor() async {
+    final isEnabled = await BluetoothService.isBluetoothEnabled();
+
+    if (isEnabled) {
+      bluetoothAdaptor.value = true;
+      log('✅ Bluetooth sudah aktif');
+      return;
+    }
+
+    // Bluetooth masih mati → tampilkan dialog dulu
+    final confirm = await Get.dialog<bool>(
+      AlertDialog(
+        title: const Text('Bluetooth Diperlukan'),
+        content: const Text(
+          'Untuk melanjutkan, nyalakan Bluetooth agar perangkat bisa terhubung.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Get.back(result: true),
+            child: const Text('Nyalakan'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) {
+      log('❌ User batal nyalakan Bluetooth');
+      return;
+    }
+
+    // Cek ulang sebelum panggil native prompt
+    final recheck = await BluetoothService.isBluetoothEnabled();
+    if (!recheck) {
+      final ok =
+          await BluetoothService.enableBluetooth(); // cuma panggil sekali
+      if (ok) {
+        bluetoothAdaptor.value = true;
+        log('✅ Bluetooth berhasil dinyalakan');
+      } else {
+        Get.snackbar(
+          'Bluetooth Tidak Aktif',
+          'Gagal menyalakan Bluetooth. Mohon aktifkan secara manual.',
+        );
+      }
+    } else {
+      bluetoothAdaptor.value = true;
+      log('✅ Bluetooth sudah aktif (langsung tanpa prompt)');
+    }
+  }
+
+  Future<void> requestBluetoothPermission() async {
+    final permissions = [
+      Permission.bluetoothScan,
+      Permission.bluetoothConnect,
+      Permission.bluetoothAdvertise,
+      Permission.locationWhenInUse, // ✅ penting buat scanning
+    ];
+
+    log('Scan: ${await Permission.bluetoothScan.status}');
+    log('Connect: ${await Permission.bluetoothConnect.status}');
+    log('Advertise: ${await Permission.bluetoothAdvertise.status}');
+    log('Location: ${await Permission.locationWhenInUse.status}');
+
+    bool allGranted = true;
+
+    for (var p in permissions) {
+      final status = await p.request();
+      if (!status.isGranted) {
+        allGranted = false;
+      }
+    }
+
+    bluetoothGranted.value = allGranted;
+
+    if (!allGranted) {
+      final permDenied =
+          await Future.wait(permissions.map((p) => p.isPermanentlyDenied));
+      final isPermanentlyDenied = permDenied.contains(true);
+
+      if (isPermanentlyDenied) {
+        Get.snackbar(
+          'Izin Diperlukan',
+          'Akses Bluetooth diblokir permanen. Aktifkan manual lewat pengaturan aplikasi.',
+        );
+        await openAppSettings();
+      } else {
+        Get.snackbar(
+          'Izin Diperlukan',
+          'Mohon izinkan akses Bluetooth & Lokasi untuk melanjutkan.',
+        );
+      }
+      return;
+    }
+
+    // ✅ Tambahan: pastikan GPS aktif
+    final serviceEnabled = await Permission.location.serviceStatus.isEnabled;
+    if (!serviceEnabled) {
+      Get.snackbar(
+        'GPS Tidak Aktif',
+        'Nyalakan GPS agar perangkat Bluetooth bisa ditemukan.',
+      );
+      return;
+    }
+
+    log('✅ Semua permission & GPS aktif, siap melakukan discovery');
+  }
+
+  @override
+  Future<void> onInit() async {
+    super.onInit();
+  }
+
+  @override
+  Future<void> onReady() async {
+    super.onReady();
+  }
+
+  @override
+  Future<void> onClose() async {
+    super.onClose();
+  }
+}

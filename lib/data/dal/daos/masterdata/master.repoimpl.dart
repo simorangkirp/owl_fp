@@ -42,7 +42,7 @@ class MasterRepositoryImpl implements MasterDataRepository {
       }
       return DataError(httpResp.data);
     } on DioException catch (e) {
-      return DataError(e);
+      return DataError(e.message);
     }
   }
 

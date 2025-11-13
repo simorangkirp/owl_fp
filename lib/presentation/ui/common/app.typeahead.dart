@@ -23,7 +23,7 @@ class AppTypeAheadField<T> extends StatelessWidget {
   final double suggestionsBoxMaxHeight;
 
   const AppTypeAheadField({
-    Key? key,
+    super.key,
     this.controller,
     required this.suggestionsCallback,
     required this.itemBuilder,
@@ -36,7 +36,7 @@ class AppTypeAheadField<T> extends StatelessWidget {
     this.enabled = true,
     this.noItemsFoundBuilder,
     this.suggestionsBoxMaxHeight = 280,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

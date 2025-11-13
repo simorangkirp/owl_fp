@@ -8,7 +8,7 @@ import 'package:owl_fp_newer/presentation/constant.dart';
 import 'package:owl_fp_newer/presentation/ui/template/controllers/template.controller.dart';
 
 class TemplateScreen extends StatelessWidget {
-  TemplateScreen({Key? key}) : super(key: key);
+  TemplateScreen({super.key});
   final controller = Get.find<TemplateController>();
 
   @override

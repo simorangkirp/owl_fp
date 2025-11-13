@@ -1,11 +1,10 @@
 import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:intl/date_symbol_data_local.dart';
+
 import 'core/injection/dependency.injenction.dart';
 import 'core/resources/app.translation.dart';
 import 'data/dal/services/db.helper.dart';
@@ -16,22 +15,27 @@ import 'presentation/theme/controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   var initialRoute = await Routes.initialRoute;
+
   log("Initialize SQL Lite");
   DatabaseHelper().database;
-  log("Initialize Dependency Injection");
-  await GetStorage.init(); // Init Get Storage
-  log("Get Storage Initialized!");
-  await DependecyInjection.init(); // Init Dependency Injection
-  log("Dependency Injection Initialized!");
-  await initializeDateFormatting('id_ID', null);
+
   log("Initialize Get Storage");
+  await GetStorage.init();
+
+  log("Initialize Dependency Injection");
+  await DependecyInjection.init();
+
+  await initializeDateFormatting('id_ID', null);
+
   runApp(Main(initialRoute));
 }
 
 class Main extends StatelessWidget {
   final String initialRoute;
   Main(this.initialRoute, {super.key});
+
   final ThemeController themeController = Get.put(ThemeController());
 
   @override
@@ -40,18 +44,17 @@ class Main extends StatelessWidget {
       designSize: const Size(360, 640),
       minTextAdapt: true,
       splitScreenMode: true,
-      // Use builder only if you need to use library outside ScreenUtilInit context
-      builder: (_, child) {
+      builder: (context, child) {
         return GetMaterialApp(
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode: themeController.theme,
           debugShowCheckedModeBanner: false,
+          theme: AppTheme.buildLightTheme(context),
+          darkTheme: AppTheme.buildDarkTheme(context),
+          themeMode: themeController.theme,
           initialRoute: initialRoute,
           getPages: Nav.routes,
-          translations: AppTranslations(), // ⬅️ tambahin translations
-          locale: const Locale('id', 'ID'), // ⬅️ default bahasa
-          fallbackLocale: const Locale('en', 'US'), // ⬅️ fallback
+          translations: AppTranslations(),
+          locale: const Locale('id', 'ID'),
+          fallbackLocale: const Locale('en', 'US'),
           unknownRoute: GetPage(
             name: '/404',
             page: () => Scaffold(
