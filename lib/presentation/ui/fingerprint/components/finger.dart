@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
-import 'package:owl_fp_newer/domain/entity/bt.entity.dart';
 
 import '../../../constant.dart';
 import '../controllers/bt14_ctrl_controller.dart';
@@ -48,71 +47,25 @@ class FingerComponents extends StatelessWidget {
                         border: const OutlineInputBorder(),
                       ),
                       value: controller2.selectedOpt1.value.isEmpty
-                          ? controller2.opt1.first
+                          ? ""
                           : controller2.selectedOpt1.value,
-                      items: controller2.opt1
-                          .map((option) => DropdownMenuItem(
-                                value: option,
-                                child: Text(option),
-                              ))
-                          .toList(),
+                      items: [
+                        const DropdownMenuItem(
+                          value: "",
+                          child: Text(""),
+                        ),
+                        ...controller2.opt1.map(
+                          (option) => DropdownMenuItem(
+                            value: option,
+                            child: Text(option),
+                          ),
+                        ),
+                      ],
                       onChanged: controller.isDiscovering.value
-                          ? null // ⛔ nonaktif saat scanning
+                          ? null
                           : (value) {
                               controller2.selectedOpt1.value = value ?? "";
-                              final idx = controller2.opt1.indexOf(value ?? "");
-
-                              switch (idx) {
-                                case 0: // 🔵 Bonded devices (termasuk OWL yang bonded, tanpa duplikat)
-                                  final merged = [
-                                    ...controller.bondedDevices,
-                                    ...controller.owlDevices.where(
-                                      (owl) => controller.bondedDevices.every(
-                                        (b) => b.address != owl.address,
-                                      ),
-                                    ),
-                                  ];
-
-                                  controller.devices.assignAll(
-                                    merged.map(
-                                      (d) => BluetoothDeviceEntity(
-                                        name: d.name,
-                                        address: d.address,
-                                        bonded: true,
-                                      ),
-                                    ),
-                                  );
-                                  break;
-
-                                case 1: // 🟡 Unbonded devices
-                                  controller.devices.assignAll(
-                                    controller.unBondedDevices.map(
-                                      (d) => BluetoothDeviceEntity(
-                                        name: d.name,
-                                        address: d.address,
-                                        bonded: false,
-                                      ),
-                                    ),
-                                  );
-                                  break;
-
-                                case 2: // 🟢 OWL devices (baik bonded/unbonded)
-                                  controller.devices.assignAll(
-                                    controller.owlDevices.map((d) {
-                                      final isBonded = controller.bondedDevices
-                                          .any((b) => b.address == d.address);
-                                      return BluetoothDeviceEntity(
-                                        name: d.name,
-                                        address: d.address,
-                                        bonded: isBonded,
-                                      );
-                                    }),
-                                  );
-                                  break;
-
-                                default:
-                                  controller.devices.clear();
-                              }
+                              controller.getDisplayDevices();
                             },
                     );
                   }),
@@ -135,32 +88,12 @@ class FingerComponents extends StatelessWidget {
             ),
             SizedBox(height: 20.h),
             Obx(() {
-              // Pilih daftar device berdasarkan dropdown
-              List<BluetoothDeviceEntity> displayedDevices;
-
-              final idx =
-                  controller2.opt1.indexOf(controller2.selectedOpt1.value);
-
-              switch (idx) {
-                case 0:
-                  displayedDevices = controller.bondedDevices;
-                  break;
-                case 1:
-                  displayedDevices = controller.unBondedDevices;
-                  break;
-                case 2:
-                  displayedDevices = controller.owlDevices;
-                  break;
-                default:
-                  displayedDevices = controller.devices;
-              }
-
               return ListView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                itemCount: displayedDevices.length,
+                itemCount: controller.displayedDevices.length,
                 itemBuilder: (context, index) {
-                  final device = displayedDevices[index];
+                  final device = controller.displayedDevices[index];
 
                   final isConnected = controller.isConnected.value &&
                       controller.selectedDevice.value?.address ==

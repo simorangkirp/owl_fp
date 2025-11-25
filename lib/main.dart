@@ -25,7 +25,7 @@ void main() async {
   await GetStorage.init();
 
   log("Initialize Dependency Injection");
-  await DependecyInjection.init();
+  await DependencyInjection.init();
 
   await initializeDateFormatting('id_ID', null);
 

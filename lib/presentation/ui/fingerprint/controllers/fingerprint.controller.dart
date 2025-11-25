@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:owl_fp_newer/domain/entity/dropopt.entity.dart';
+import 'package:owl_fp_newer/domain/usecase/template/get.fptemp.usecase.dart';
 import 'package:owl_fp_newer/presentation/ui/common/controller/permission.controller.dart';
 
 import '../../../../core/resources/data.state.dart';
@@ -15,7 +16,6 @@ import '../../../../domain/entity/karyawan.entity.dart';
 import '../../../../domain/usecase/fingerprint/get.admin.ddoptlist.dart';
 import '../../../../domain/usecase/fingerprint/get.btstats.opt.usecase.dart';
 import '../../../../domain/usecase/fingerprint/get.dt.opt.usecase.dart';
-import '../../../../domain/usecase/fingerprint/get.mst.admin.dart';
 import '../../../../domain/usecase/fingerprint/get.setting.options.dart';
 import '../../../../domain/usecase/fingerprint/get.uploaddown.opt.usecase.dart';
 import '../../../../domain/usecase/fingerprint/sn.usecase.dart';
@@ -45,10 +45,11 @@ class FingerprintController extends GetxController {
   final GetBtstatsOptUseCase _getBtstatsOptUseCase;
   final InsertTemplateUseCase _insertTemplateUseCase;
   final DeleteTemplateUseCase _deleteTemplateUseCase;
+  final DeleteTemplateByNikUseCase _deleteTemplatebyNikUseCase;
   final GetSNListUsecase _getSNUsecase;
   final GetDataTemplate _getTemplateData;
   final SendTemplateUseCase _sendTemplateData;
-  final GetMasterAdminUsecase _getAdminMasterData;
+  final KaryawanFPTemplateUsecase _fpTempbyNikUseCase;
 
   FingerprintController(
     this._searchKaryawan,
@@ -59,10 +60,11 @@ class FingerprintController extends GetxController {
     this._getBtstatsOptUseCase,
     this._insertTemplateUseCase,
     this._deleteTemplateUseCase,
+    this._deleteTemplatebyNikUseCase,
     this._getSNUsecase,
     this._getTemplateData,
     this._sendTemplateData,
-    this._getAdminMasterData,
+    this._fpTempbyNikUseCase,
   );
 
   // -------------------------
@@ -143,7 +145,6 @@ class FingerprintController extends GetxController {
     await searchData();
     await getDropdownOptionList();
     await getSNList();
-    await getMstAdmin();
   }
 
   @override
@@ -167,13 +168,6 @@ class FingerprintController extends GetxController {
   // Usecase / Async functions
   // -------------------------
 
-  Future<void> getMstAdmin() async {
-    listAdminOpt.value = await _getAdminMasterData.execute();
-    for (var element in listAdminOpt) {
-      log(element.key ?? "");
-    }
-  }
-
   Future<List<KaryawanEntity>?> searchData() async {
     var res = await _searchKaryawan.execute(typeAheadController.text);
     if (res != null) {
@@ -186,27 +180,13 @@ class FingerprintController extends GetxController {
     switch (index) {
       case 0:
         log("Download Template dari Finger");
-        await insertTemplateLocal(authDialogArg);
+        await insertTemplateLocal();
         break;
       case 1:
-        await tambahAdminPrivilege();
+        await downloadTemplateByNik();
         break;
       case 2:
         await sendTemplateToDevice();
-        break;
-    }
-  }
-
-  Future<void> adminOptSend(int index) async {
-    switch (index) {
-      case 0:
-        await gantiPIN();
-        break;
-      case 1:
-        await tambahAdminPrivilege();
-        break;
-      case 2:
-        await adminHapusbyNik();
         break;
     }
   }
@@ -324,9 +304,36 @@ class FingerprintController extends GetxController {
     });
   }
 
-  Future<void> insertTemplateLocal(String args) async {
+  Future<void> downloadTemplateByNik() async {
+    await btCtrl.getTemplateByNikFromDevice();
+    // Ambil data template dari controller
+    dataTemplate = btCtrl.listInsertTemplate;
+
+    if (dataTemplate.isEmpty) {
+      log("❌ Tidak ada template diterima");
+      return;
+    } else {
+      // TODO
+      // Cek di db lokal berdasarkan SN kalo dia ada hapus dulu baru insert ulang, kalo ga ada langsung insert
+
+      var data = await _fpTempbyNikUseCase.execute({
+        'sn': btCtrl.deviceInfo?['sn'] ?? "-",
+        'nik': btCtrl.selectedRegisterNIK
+      });
+      if (data.isNotEmpty) {
+        // TODO: Delete data di lokal lalu insert ulang
+        await _deleteTemplatebyNikUseCase.execute({
+          'sn': btCtrl.deviceInfo?['sn'] ?? "-",
+          'nik': btCtrl.selectedRegisterNIK
+        });
+        await _insertTemplateUseCase.execute(dataTemplate);
+      }
+    }
+  }
+
+  Future<void> insertTemplateLocal() async {
     // Tunggu sampai template selesai diterima
-    await btCtrl.getTemplateFromDevice(args);
+    await btCtrl.getTemplateFromDevice();
 
     // Ambil data template dari controller
     dataTemplate = btCtrl.listInsertTemplate;
@@ -364,56 +371,6 @@ class FingerprintController extends GetxController {
     for (var el in listSN) {
       log(el);
     }
-  }
-
-  Future<void> tambahAdminPrivilege() async {
-    String access = "";
-    for (var el in listAdminOpt) {
-      if (el.selected.value) {
-        access = '${access}1';
-      } else {
-        access = '${access}0';
-      }
-    }
-    await btCtrl.addAdminPrivileges(access, authDialogArg, "");
-    await btCtrl.resetVariables();
-    authDialogCtrl.clear();
-    authDialogArg = "";
-  }
-
-  Future<void> adminHapusbyNik() async {
-    await btCtrl.regDelFinger(
-      isRegister: false, // false kalau hapus
-      nik: btCtrl.selectedRegisterNIK, // pakai variable dari controller
-      name: btCtrl.selectedRegisterNm, // pakai variable dari controller
-      auth: authDialogArg,
-    );
-    authDialogCtrl.clear();
-    await btCtrl.resetVariables();
-    authDialogArg = "";
-  }
-
-  Future<void> gantiPIN() async {
-    if (oldpinCtrl.text == confpinCtrl.text) {
-      await btCtrl.gantiPIN(newpinCtrl.text, authDialogArg);
-      await btCtrl.resetVariables();
-    } else {
-      Get.snackbar(
-        '',
-        "PIN Baru tidak sama",
-        titleText: const SizedBox.shrink(),
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.black87,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 2),
-        margin: const EdgeInsets.all(12),
-      );
-    }
-    authDialogCtrl.clear();
-    newpinCtrl.clear();
-    oldpinCtrl.clear();
-    confpinCtrl.clear();
-    authDialogArg = "";
   }
 
   /// Centralized permission + connection check

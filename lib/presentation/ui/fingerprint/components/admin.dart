@@ -5,38 +5,37 @@ import 'package:get/get.dart';
 import 'package:owl_fp_newer/core/resources/utils.dart';
 import 'package:owl_fp_newer/domain/entity/karyawan.entity.dart';
 import 'package:owl_fp_newer/presentation/ui/common/dialog.dart';
+import 'package:owl_fp_newer/presentation/ui/fingerprint/controllers/bt14_ctrl_controller.dart';
 
 import '../../../constant.dart';
 import '../../common/app.typeahead.dart';
-import '../controllers/bt.controller.dart';
 import '../controllers/fingerprint.controller.dart';
 
 class AdminComponent extends StatelessWidget {
   AdminComponent({super.key});
 
   final controller = Get.find<FingerprintController>();
-  final btctrl = Get.find<BluetoothController>();
+  final btctrl = Get.find<Bt14CtrlController>();
 
   Future<void> _openDialog(int index) async {
     // 🔹 Jalankan pengecekan permission dulu
     await controller.checkPermission(() {
       // 🔹 Panggil dialog global
       showAuthDialog(
-        obsecure: controller.isPwObscured,
+        obsecure: btctrl.isPwObscured,
         title: "auth".tr,
         message: "inputPassword".tr,
-        controller: controller.authDialogCtrl,
+        controller: btctrl.authCtrl,
         onSubmit: () {
-          final password = controller.authDialogCtrl.text.trim();
+          final password = btctrl.authCtrl.text.trim();
 
           if (password.isEmpty) {
             showSnackBar("Password tidak boleh kosong!");
             return;
           }
-          controller.authDialogCtrl.clear();
 
           // 🔹 Jalankan fungsi utama
-          controller.adminOptSend(controller.admselectedMenuIndex.value);
+          btctrl.adminSelection(controller.admselectedMenuIndex.value);
         },
       );
     });
@@ -51,7 +50,7 @@ class AdminComponent extends StatelessWidget {
           Text("${"oldPin".tr}:", style: theme.labelMedium),
           SizedBox(height: 8.h),
           TextFormField(
-            controller: controller.oldpinCtrl,
+            controller: btctrl.oldpinCtrl,
             obscureText: true,
             decoration: const InputDecoration(
               hintText: '******',
@@ -68,7 +67,7 @@ class AdminComponent extends StatelessWidget {
           Text("${"newPin".tr}:", style: theme.labelMedium),
           SizedBox(height: 8.h),
           TextFormField(
-            controller: controller.newpinCtrl,
+            controller: btctrl.newpinCtrl,
             obscureText: true,
             decoration: const InputDecoration(
               hintText: '******',
@@ -85,7 +84,7 @@ class AdminComponent extends StatelessWidget {
           Text("${"confirmPin".tr}:", style: theme.labelMedium),
           SizedBox(height: 8.h),
           TextFormField(
-            controller: controller.confpinCtrl,
+            controller: btctrl.confpinCtrl,
             obscureText: true,
             decoration: const InputDecoration(
               hintText: '******',
@@ -121,7 +120,7 @@ class AdminComponent extends StatelessWidget {
               }
               return null;
             },
-            controller: controller.typeAheadController,
+            controller: btctrl.typeAheadController,
             hintText: 'findEmply'.tr,
             suggestionsCallback: (pattern) async {
               return controller.karyawanlist.where((item) {
@@ -135,8 +134,7 @@ class AdminComponent extends StatelessWidget {
             onSuggestionSelected: (suggestion) {
               btctrl.selectedRegisterNm = suggestion.namakaryawan ?? "";
               btctrl.selectedRegisterNIK = suggestion.karyawanid ?? "";
-              controller.typeAheadController.text =
-                  suggestion.namakaryawan ?? "";
+              btctrl.typeAheadController.text = suggestion.namakaryawan ?? "";
             },
             noItemsFoundBuilder: (ctx) => Padding(
               padding: const EdgeInsets.all(8),
@@ -149,9 +147,9 @@ class AdminComponent extends StatelessWidget {
           ListView.builder(
             controller: optCtrl,
             shrinkWrap: true,
-            itemCount: controller.listAdminOpt.length,
+            itemCount: btctrl.listAdminOpt.length,
             itemBuilder: (context, index) {
-              var data = controller.listAdminOpt[index];
+              var data = btctrl.listAdminOpt[index];
               return Row(
                 children: [
                   Obx(() => Checkbox(

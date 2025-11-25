@@ -2,7 +2,8 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:owl_fp_newer/core/resources/bt.native.dart';
+import 'package:owl_fp_newer/core/services/bluetooth.service.dart';
+import 'package:owl_fp_newer/core/services/permission.service.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class PermissionController extends GetxController {
@@ -10,7 +11,16 @@ class PermissionController extends GetxController {
   final bluetoothAdaptor = false.obs;
 
   Future<void> checkBtAdaptor() async {
-    final isEnabled = await BluetoothService.isBluetoothEnabled();
+    // 🔥 WAJIB: pastikan permission granted sebelum apapun
+    await requestBluetoothPermission();
+
+    if (!bluetoothGranted.value) {
+      log('❌ Permission belum diberikan, stop.');
+      return;
+    }
+
+    // Setelah permission OK → baru boleh cek status Bluetooth
+    final isEnabled = await FlutterBluetoothClassic.isBluetoothEnabled();
 
     if (isEnabled) {
       bluetoothAdaptor.value = true;
@@ -18,7 +28,7 @@ class PermissionController extends GetxController {
       return;
     }
 
-    // Bluetooth masih mati → tampilkan dialog dulu
+    // Bluetooth masih mati → tampilkan dialog
     final confirm = await Get.dialog<bool>(
       AlertDialog(
         title: const Text('Bluetooth Diperlukan'),
@@ -43,11 +53,12 @@ class PermissionController extends GetxController {
       return;
     }
 
-    // Cek ulang sebelum panggil native prompt
-    final recheck = await BluetoothService.isBluetoothEnabled();
+    // Cek ulang
+    final recheck = await FlutterBluetoothClassic.isBluetoothEnabled();
     if (!recheck) {
-      final ok =
-          await BluetoothService.enableBluetooth(); // cuma panggil sekali
+      // 👉 Sekarang aman, karena permission CONNECT sudah granted
+      final ok = await FlutterBluetoothClassic.enableBluetooth();
+
       if (ok) {
         bluetoothAdaptor.value = true;
         log('✅ Bluetooth berhasil dinyalakan');
@@ -59,8 +70,31 @@ class PermissionController extends GetxController {
       }
     } else {
       bluetoothAdaptor.value = true;
-      log('✅ Bluetooth sudah aktif (langsung tanpa prompt)');
+      log('✅ Bluetooth sudah aktif (langsung)');
     }
+  }
+
+  Future<bool> checkOtaPermission() async {
+    final permService = Get.find<PermissionService>();
+
+    bool ok = await permService.hasOtaPermissions();
+
+    if (!ok) {
+      ok = await permService.requestOtaPermissions();
+    }
+
+    if (!ok) {
+      Get.snackbar(
+        "Izin Diperlukan",
+        "Mohon izinkan akses Storage dan Install Aplikasi untuk melanjutkan update.",
+      );
+
+      // Kalau permanently denied
+      await openAppSettings();
+      return false;
+    }
+
+    return true;
   }
 
   Future<void> requestBluetoothPermission() async {

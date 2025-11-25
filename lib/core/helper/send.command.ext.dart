@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -50,13 +52,13 @@ extension SendCommandUI on SendCommandUseCase {
 
       if (Get.isDialogOpen == true) Get.back();
       if (successMsg != null) {
-        Get.snackbar("Sukses", successMsg);
+        log("Sukses : $successMsg");
       } else {
-        Get.snackbar("Sukses", "Perintah $desc berhasil dikirim");
+        log("Perintah $desc berhasil dikirim");
       }
     } catch (e) {
       if (Get.isDialogOpen == true) Get.back();
-      Get.snackbar("Error", errorMsg ?? e.toString());
+      log("Error, ${errorMsg ?? e.toString()}");
     }
   }
 }

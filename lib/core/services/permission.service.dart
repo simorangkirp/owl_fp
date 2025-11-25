@@ -66,4 +66,35 @@ class PermissionService extends GetxService {
   Future<void> openSettings() async {
     await openAppSettings();
   }
+
+  // ================================
+  // OTA UPDATE PERMISSIONS
+  // ================================
+
+  /// Request full permissions needed for OTA update
+  Future<bool> requestOtaPermissions() async {
+    final permissions = [
+      Permission.storage, // Android < 13
+      Permission.manageExternalStorage, // Android 11+
+      Permission.requestInstallPackages, // install APK
+    ];
+
+    bool granted = true;
+
+    for (var p in permissions) {
+      var status = await p.request();
+      if (!status.isGranted) {
+        granted = false;
+      }
+    }
+
+    return granted;
+  }
+
+  /// Check all OTA permissions
+  Future<bool> hasOtaPermissions() async {
+    return await Permission.storage.isGranted &&
+        await Permission.manageExternalStorage.isGranted &&
+        await Permission.requestInstallPackages.isGranted;
+  }
 }

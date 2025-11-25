@@ -9,3 +9,13 @@ class DeleteTemplateUseCase {
     return repository.deleteTemp(arg);
   }
 }
+
+class DeleteTemplateByNikUseCase {
+  final FingerprintRepository repository;
+
+  DeleteTemplateByNikUseCase(this.repository);
+
+  Future<int> execute(Map<String, String> arg) {
+    return repository.deleteTempbyNik(arg);
+  }
+}

@@ -89,6 +89,11 @@ class FingerprintRepoImpl implements FingerprintRepository {
     return await localDataSource.getUploadDownloadOpt(arg);
   }
 
+  @override
+  Future<int> deleteTempbyNik(Map<String, String> arg) async {
+    return await localDataSource.deleteTempbyNikLocal(arg);
+  }
+
   // @override
   // Future<void> sendTemptoDevice(Map<String, dynamic> args) async {
   //   return await localDataSource.insertTemplateOnce(args);

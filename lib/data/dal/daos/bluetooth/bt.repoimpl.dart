@@ -17,11 +17,6 @@ class BluetoothRepositoryImpl implements BluetoothRepository {
   StreamSubscription? _dataSub;
 
   @override
-  Future<void> checkPermission(Function() onGranted) async {
-    await onGranted();
-  }
-
-  @override
   Future<List<BluetoothDeviceEntity>> getPairedDevices() async {
     try {
       final list = await dataSource.getPairedDevices();
@@ -37,6 +32,7 @@ class BluetoothRepositoryImpl implements BluetoothRepository {
     Function(String state)? onStateChanged,
     Function(String conn)? onConnectionChanged,
     Function(String data)? onDataReceived,
+    Function(String result)? onResultReceived,
   }) async {
     _stateSub?.cancel();
     _connSub?.cancel();
@@ -62,8 +58,19 @@ class BluetoothRepositoryImpl implements BluetoothRepository {
 
     try {
       _dataSub = FlutterBluetoothClassic.onDataReceived().listen((data) {
-        log("📩 Data received: ${data['data']}");
-        onDataReceived?.call(data['data'].toString());
+        final map = Map<String, dynamic>.from(data);
+        log("📩 Data received: ${map['data']}");
+
+        // 🔔 Jika ada key "result"
+        if (map.containsKey("perintah")) {
+          final result = map['perintah'].toString();
+          log("✅ Result diterima dari device: $result");
+
+          // Kirim balik ke controller biar bisa munculin snackbar
+          onResultReceived?.call(result);
+        }
+
+        onDataReceived?.call(map['data']?.toString() ?? '');
       });
     } catch (e) {
       log("⚠️ initListeners onDataReceived error: $e");
@@ -79,22 +86,14 @@ class BluetoothRepositoryImpl implements BluetoothRepository {
         return;
       }
 
-      log("📡 Mengambil data dari device...");
-      final ok1 = await dataSource.sendCommand("y", desc: "Device Info");
-      if (!ok1) log("⚠️ Gagal kirim 'y'");
+      // log("📡 Mengambil data dari device...");
+      // final ok1 = await dataSource.sendCommand("y", desc: "Device Info");
+      // final ok1 = await dataSource.sendCommand("9", desc: "Device Info");
+      // if (!ok1) log("⚠️ Gagal kirim 'y'");
 
-      await Future.delayed(const Duration(milliseconds: 300));
-      final deviceInfo = await dataSource.getDeviceInfo();
-      if (deviceInfo != null) await dataSource.saveFPInfo(deviceInfo);
-
-      final ok2 = await dataSource.sendCommand("9", desc: "WiFi Info");
-      if (!ok2) log("⚠️ Gagal kirim '9'");
-
-      await Future.delayed(const Duration(milliseconds: 300));
-      final ok3 = await dataSource.sendCommand("I", desc: "URI Info");
-      if (!ok3) log("⚠️ Gagal kirim 'I'");
-
-      log("✅ Semua data device berhasil diminta");
+      // await Future.delayed(const Duration(milliseconds: 300));
+      // final deviceInfo = await dataSource.getDeviceInfo();
+      // if (deviceInfo != null) await dataSource.saveFPInfo(deviceInfo);
     } catch (e) {
       log("❌ fetchDeviceData error: $e");
       Get.snackbar("Error", e.toString());
@@ -174,5 +173,13 @@ class BluetoothRepositoryImpl implements BluetoothRepository {
   @override
   Future<bool> isConnected() async {
     return dataSource.isConnected;
+  }
+
+  @override
+  Future<void> fetchInitValue() async {
+    if (!_connected) throw Exception("Belum terhubung ke perangkat");
+    log("📤 Request Wifi Info");
+    final wifi = await dataSource.sendCommand("9", desc: "Device Wifi");
+    if (!wifi) throw Exception("Gagal mengirim request Wifi.");
   }
 }

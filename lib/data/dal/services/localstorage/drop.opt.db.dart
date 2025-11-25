@@ -13,6 +13,7 @@ abstract class DropOptLocalDataSource {
   Future<void> insertTemplateAll(List<Map<String, dynamic>> arg);
   Future<void> insertTemplateOnce(Map<String, dynamic> arg);
   Future<int> deleteTempLocal(String arg);
+  Future<int> deleteTempbyNikLocal(Map<String, String> arg);
   Future<List<String>> getSn();
   Future<List<TemplateModel>> getTemplateData(String arg);
   Future<List<MstAdminModel>> getMstAdminDb();
@@ -84,5 +85,10 @@ class DropOptLocalDataSourceImpl extends DropOptLocalDataSource {
   @override
   Future<List<String>> localImplAdminOpt(String arg) async {
     return await databaseHelper.getListStringOptQuery(arg);
+  }
+
+  @override
+  Future<int> deleteTempbyNikLocal(Map<String, String> arg) async {
+    return await databaseHelper.deleteTemplatebyNik(arg);
   }
 }

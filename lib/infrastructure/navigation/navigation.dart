@@ -61,7 +61,7 @@ class Nav {
     ),
     GetPage(
       name: Routes.about,
-      page: () => const AboutScreen(),
+      page: () => AboutScreen(),
       binding: AboutControllerBinding(),
     ),
     GetPage(

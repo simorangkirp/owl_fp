@@ -1,7 +1,9 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:owl_fp_newer/data/dio/dio.exception.dart';
 
-import '../../core/error/exception.handler.dart';
 import '../../core/resources/utils.dart';
 
 class DioClient {
@@ -33,14 +35,14 @@ class DioClient {
     ));
   }
 
-  /// 🔹 GET request
+  /// GET
   Future<Response> get(
     String path, {
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
-    return _retryRequest(() async {
-      return await _dio.get(
+    return _retryRequest(() {
+      return _dio.get(
         path,
         queryParameters: queryParameters,
         options: options,
@@ -48,55 +50,80 @@ class DioClient {
     }, "GET $path");
   }
 
-  /// 🔹 POST request
+  /// POST
   Future<Response> post(
     String path, {
-    Map<String, dynamic>? data,
+    dynamic data,
     Map<String, dynamic>? queryParameters,
     Options? options,
   }) async {
-    return _retryRequest(() async {
-      return await _dio.post(
+    return _retryRequest(() {
+      return _dio.post(
         path,
-        data: data ?? {},
+        data: data,
         queryParameters: queryParameters,
         options: options,
       );
     }, "POST $path");
   }
 
-  /// 🔹 Retry wrapper + auto cancel
+  /// Retry Handler
   Future<Response> _retryRequest(
     Future<Response> Function() request,
     String stepName,
   ) async {
     int retry = 0;
-    final cancelToken = CancelToken();
 
     while (true) {
       try {
         return await request();
-      } catch (e) {
-        if (e is DioError &&
-            (e.type == DioErrorType.connectTimeout ||
-                e.type == DioErrorType.receiveTimeout ||
-                e.type == DioErrorType.sendTimeout) &&
-            retry < maxRetry) {
+      } on DioError catch (e) {
+        // cek timeout
+        final isTimeout = e.type == DioErrorType.connectTimeout ||
+            e.type == DioErrorType.receiveTimeout ||
+            e.type == DioErrorType.sendTimeout;
+
+        if (isTimeout && retry < maxRetry) {
           retry++;
-          debugPrint("⏳ $stepName timeout, coba ulang ($retry/$maxRetry)...");
+          debugPrint("⏳ $stepName timeout, retry $retry/$maxRetry");
+
           DialogHelper.showRetrySnack(retry, maxRetry);
+
           await Future.delayed(retryDelay);
           continue;
         }
 
-        // ❌ Batalkan request kalau sudah max retry
-        if (retry >= maxRetry && !cancelToken.isCancelled) {
-          cancelToken
-              .cancel("Request dibatalkan setelah $maxRetry kali retry.");
-        }
-
-        throw ExceptionHandler.fromDioError(e as DioError);
+        // convert ke exception buatan kamu
+        throw _mapDioError(e);
       }
     }
   }
+}
+
+Exception _mapDioError(DioError e) {
+  // Timeout
+  if (e.type == DioErrorType.connectTimeout ||
+      e.type == DioErrorType.receiveTimeout ||
+      e.type == DioErrorType.sendTimeout) {
+    return TimeoutException();
+  }
+
+  // No Internet
+  if (e.error is SocketException) {
+    return NetworkException();
+  }
+
+  // Unexpected server response
+  if (e.type == DioErrorType.response) {
+    return ServerException(
+      e.response?.data?["message"] ?? "Server error",
+      e.response?.statusCode,
+    );
+  }
+
+  // Default
+  return DioException(
+    e.message,
+    e.response?.statusCode,
+  );
 }

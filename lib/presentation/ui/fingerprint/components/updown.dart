@@ -4,14 +4,14 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:owl_fp_newer/domain/entity/karyawan.entity.dart';
 import 'package:owl_fp_newer/presentation/ui/common/dialog.dart';
+import 'package:owl_fp_newer/presentation/ui/fingerprint/controllers/bt14_ctrl_controller.dart';
 import '../../../constant.dart';
 import '../../common/app.typeahead.dart';
-import '../controllers/bt.controller.dart';
 import '../controllers/fingerprint.controller.dart';
 
 class UpdownComponent extends StatelessWidget {
   UpdownComponent({super.key});
-  final btCtrl = Get.find<BluetoothController>();
+  final btCtrl = Get.find<Bt14CtrlController>();
   final ctrl = Get.find<FingerprintController>();
 
   @override
@@ -163,9 +163,8 @@ class UpdownComponent extends StatelessWidget {
                       obsecure: ctrl.isPwObscured,
                       title: "Otentikasi Upload",
                       message: "Masukkan Password!",
-                      controller: ctrl.authDialogCtrl,
+                      controller: btCtrl.authCtrl,
                       onSubmit: () {
-                        ctrl.authDialogCtrl.clear();
                         ctrl.uploadDownloadOptSend(
                             ctrl.undselectedMenuIndex.value);
                       },

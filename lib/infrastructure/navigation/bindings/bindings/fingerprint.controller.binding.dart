@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
+import 'package:owl_fp_newer/data/dal/daos/template/template.repoimpl.dart';
 
 import 'package:owl_fp_newer/domain/usecase/fingerprint/delete.template.dart';
+import 'package:owl_fp_newer/domain/usecase/template/get.fptemp.usecase.dart';
 import 'package:owl_fp_newer/presentation/ui/common/controller/permission.controller.dart';
 
 import '/domain/usecase/fingerprint/get.admin.ddoptlist.dart';
@@ -8,7 +10,6 @@ import '/data/dal/daos/fingerprint/fp.repoimpl.dart';
 import '/data/dal/daos/masterdata/master.repoimpl.dart';
 import '/domain/usecase/fingerprint/get.btstats.opt.usecase.dart';
 import '/domain/usecase/fingerprint/get.dt.opt.usecase.dart';
-import '/domain/usecase/fingerprint/get.mst.admin.dart';
 import '/domain/usecase/fingerprint/get.setting.options.dart';
 import '/domain/usecase/fingerprint/get.template.dart';
 import '/domain/usecase/fingerprint/get.uploaddown.opt.usecase.dart';
@@ -48,6 +49,9 @@ class FingerprintControllerBinding extends Bindings {
       () => DeleteTemplateUseCase(Get.find<FingerprintRepoImpl>()),
     );
     Get.lazyPut(
+      () => DeleteTemplateByNikUseCase(Get.find<FingerprintRepoImpl>()),
+    );
+    Get.lazyPut(
       () => GetSNListUsecase(Get.find<FingerprintRepoImpl>()),
     );
     Get.lazyPut(
@@ -57,7 +61,7 @@ class FingerprintControllerBinding extends Bindings {
       () => SendTemplateUseCase(Get.find<FingerprintRepoImpl>()),
     );
     Get.lazyPut(
-      () => GetMasterAdminUsecase(Get.find<FingerprintRepoImpl>()),
+      () => KaryawanFPTemplateUsecase(Get.find<TemplateRepoImpl>()),
     );
     // Tambahkan controller PermissionController
     Get.lazyPut<PermissionController>(
@@ -76,10 +80,11 @@ class FingerprintControllerBinding extends Bindings {
         Get.find<GetBtstatsOptUseCase>(),
         Get.find<InsertTemplateUseCase>(),
         Get.find<DeleteTemplateUseCase>(),
+        Get.find<DeleteTemplateByNikUseCase>(),
         Get.find<GetSNListUsecase>(),
         Get.find<GetDataTemplate>(),
         Get.find<SendTemplateUseCase>(),
-        Get.find<GetMasterAdminUsecase>(),
+        Get.find<KaryawanFPTemplateUsecase>(),
         // Get.find<SendTemplateToDeviceUsecase>(),
         // Get.find<TemplateController>(),
       ),

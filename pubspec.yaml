@@ -2,7 +2,7 @@ name: owl_fp_newer
 description: "A new Flutter project."
 publish_to: "none"
 
-version: 1.0.0+1
+version: 1.0.0+2
 
 environment:
   sdk: ^3.6.0
@@ -28,12 +28,17 @@ dependencies:
   flutter_bluetooth_classic_serial:
     path: packages/flutter_bluetooth_classic_serial
   permission_handler: ^12.0.1
+  package_info_plus: ^8.0.0
+  path_provider: ^2.1.5
+  ota_update: ^6.0.0
+  # install_plugin: ^2.1.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_launcher_icons: ^0.14.4
   flutter_lints: ^5.0.0
+  rename_app: ^1.3.1
 
 # ✅ Bagian ini sudah benar untuk generate icon
 flutter_launcher_icons:

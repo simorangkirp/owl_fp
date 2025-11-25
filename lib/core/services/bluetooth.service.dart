@@ -41,6 +41,25 @@ class FlutterBluetoothClassic {
     return ok == true;
   }
 
+  /// 📡 Stream status Bluetooth (on/off/etc)
+  static Stream<String> get bluetoothStateStream {
+    _stateStream ??=
+        _state.receiveBroadcastStream().map((event) => event.toString());
+    return _stateStream!;
+  }
+
+  static Future<bool> ensureBluetoothEnabled() async {
+    final enabled = await isBluetoothEnabled();
+    if (enabled) return true;
+
+    return await enableBluetooth();
+  }
+
+  /// 🛑 Reset stream scanning agar discovery bisa dipanggil ulang
+  static void resetScanStream() {
+    _scanStream = null;
+  }
+
   /// 📡 Stream status Bluetooth: 'enabled', 'disabled', 'unsupported'
   static Stream<String> onStateChanged() {
     _stateStream ??=

@@ -55,39 +55,33 @@ class TemplateScreen extends StatelessWidget {
               SizedBox(height: 12.h),
               Text("${"emplNm".tr}:", style: theme.labelMedium),
               SizedBox(height: 4.h),
-              Obx(
-                () => TypeAheadField<String>(
-                  // builder untuk bikin TextField
-                  builder: (context, textController, focusNode) {
-                    return TextField(
+              TypeAheadField<String>(
+                builder: (context, textController, focusNode) {
+                  return Obx(
+                    () => TextField(
                       enabled: controller.selectedSN.value != "",
-                      controller: controller
-                          .typeAheadTCtrl, // pakai controller kamu sendiri
+                      controller: controller.typeAheadTCtrl,
                       focusNode: focusNode,
-                      decoration: InputDecoration(
-                        labelStyle: theme.labelLarge,
-                        border: const OutlineInputBorder(),
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
                       ),
-                    );
-                  },
-                  // ambil data suggestion
-                  suggestionsCallback: (pattern) async {
-                    return controller.listKaryawan.where((item) {
-                      final name = item;
-                      return name.toLowerCase().contains(pattern.toLowerCase());
-                    }).toList();
-                  },
-                  // render suggestion item
-                  itemBuilder: (context, suggestion) {
-                    return ListTile(title: Text(suggestion));
-                  },
-                  // ketika suggestion dipilih
-                  onSelected: (suggestion) {
-                    controller.typeAheadTCtrl.text = suggestion;
-                    controller.selectedKaryawan.value = suggestion;
-                    controller.getTemplate();
-                  },
-                ),
+                    ),
+                  );
+                },
+                suggestionsCallback: (pattern) {
+                  return controller.listKaryawan
+                      .where((item) =>
+                          item.toLowerCase().contains(pattern.toLowerCase()))
+                      .toList();
+                },
+                itemBuilder: (context, suggestion) {
+                  return ListTile(title: Text(suggestion));
+                },
+                onSelected: (suggestion) {
+                  controller.typeAheadTCtrl.text = suggestion;
+                  controller.selectedKaryawan.value = suggestion;
+                  controller.getTemplate();
+                },
               ),
               SizedBox(height: 12.h),
               Text("fingerList".tr, style: theme.labelMedium),

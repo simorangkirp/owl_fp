@@ -12,6 +12,9 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.content.pm.PackageManager
+import android.Manifest
+import androidx.core.app.ActivityCompat
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
@@ -51,7 +54,7 @@ class FlutterBluetoothClassicPlugin : FlutterPlugin, MethodChannel.MethodCallHan
     // bluetooth
     private val adapter: BluetoothAdapter? get() = BluetoothAdapter.getDefaultAdapter()
     private var discoveryReceiver: BroadcastReceiver? = null
-    private var bluetoothStateReceiver: BroadcastReceiver? = null // ✅ new
+    private var bluetoothStateReceiver: BroadcastReceiver? = null // ✅ state receiver
 
     // socket/io
     private var socket: BluetoothSocket? = null
@@ -126,14 +129,14 @@ class FlutterBluetoothClassicPlugin : FlutterPlugin, MethodChannel.MethodCallHan
             }
         })
 
-        // ✅ Register Bluetooth state change receiver
+        // Register Bluetooth state change receiver (safe — uses nullable context check inside)
         registerBluetoothStateReceiver()
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
         stopDiscovery()
         disconnectInternal()
-        unregisterBluetoothStateReceiver() // ✅ cleanup
+        unregisterBluetoothStateReceiver()
         methodChannel.setMethodCallHandler(null)
         discoveryChannel.setStreamHandler(null)
         dataChannel.setStreamHandler(null)
@@ -186,9 +189,25 @@ class FlutterBluetoothClassicPlugin : FlutterPlugin, MethodChannel.MethodCallHan
 
             "isBluetoothSupported" -> result.success(adapter != null)
 
-            "isBluetoothEnabled" -> result.success(adapter?.isEnabled == true)
+            "isBluetoothEnabled" -> {
+                // Some platforms require BLUETOOTH_CONNECT to read state on Android 12+
+                val ctx = context
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    if (ctx == null) {
+                        result.error("NO_CONTEXT", "Context is null", null)
+                        return
+                    }
+                    if (ActivityCompat.checkSelfPermission(ctx, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                        result.error("NO_PERMISSION", "BLUETOOTH_CONNECT not granted", null)
+                        return
+                    }
+                }
+                result.success(adapter?.isEnabled == true)
+            }
 
-            "enableBluetooth" -> handleEnableBluetooth(result)
+            "enableBluetooth" -> {
+                handleEnableBluetooth(result)
+            }
 
             "connectInsecure" -> {
                 val address = call.argument<String>("address")
@@ -228,62 +247,67 @@ class FlutterBluetoothClassicPlugin : FlutterPlugin, MethodChannel.MethodCallHan
         }
     }
 
+    // ---------------------------
+    // enable Bluetooth flow
+    // ---------------------------
     private fun handleEnableBluetooth(result: MethodChannel.Result) {
         val ad = adapter ?: run {
-            result.success(false); return
+            result.success(false)
+            return
         }
 
+        // Already ON
         if (ad.isEnabled) {
-            result.success(true); return
+            result.success(true)
+            return
         }
 
-        if (isEnablingBluetooth) {
-            Log.w(TAG, "enableBluetooth called while already enabling")
-            result.success(false); return
+        // If another request is pending, reject
+        if (pendingEnableResult != null) {
+            result.error("ALREADY_REQUESTING", "Bluetooth enable pending", null)
+            return
         }
 
-        isEnablingBluetooth = true
-
+        // Android 12+ requires BLUETOOTH_CONNECT permission and Activity for the system dialog
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            if (activity == null) {
-                try {
-                    val intent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    context?.startActivity(intent)
-                    result.success(ad.isEnabled)
-                } catch (e: Exception) {
-                    Log.e(TAG, "enableBluetooth error: ${e.message}")
-                    result.success(false)
-                } finally {
-                    isEnablingBluetooth = false
-                }
-            } else {
-                if (pendingEnableResult != null) {
-                    result.error("ALREADY_REQUESTING", "Another enable request is pending", null)
-                    isEnablingBluetooth = false
-                } else {
-                    pendingEnableResult = result
-                    try {
-                        val intent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-                        activity?.startActivityForResult(intent, REQUEST_ENABLE_BT)
-                    } catch (e: Exception) {
-                        Log.e(TAG, "enableBluetooth startActivityForResult failed: ${e.message}")
-                        pendingEnableResult = null
-                        isEnablingBluetooth = false
-                        result.success(false)
-                    }
-                }
+            val ctx = context ?: run {
+                Log.e(TAG, "Context is null")
+                result.error("NO_CONTEXT", "Context is null", null)
+                return
             }
-        } else {
+
+            if (ActivityCompat.checkSelfPermission(ctx, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                Log.e(TAG, "BLUETOOTH_CONNECT not granted")
+                result.error("NO_PERMISSION", "BLUETOOTH_CONNECT not granted", null)
+                return
+            }
+
+            val act = activity ?: run {
+                Log.e(TAG, "Activity is null - cannot show enable dialog")
+                result.error("NO_ACTIVITY", "Activity is null", null)
+                return
+            }
+
+            // mark pending and launch system dialog
+            pendingEnableResult = result
             try {
-                val success = ad.enable()
-                result.success(success)
+                val intent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
+                act.startActivityForResult(intent, REQUEST_ENABLE_BT)
             } catch (e: Exception) {
-                Log.e(TAG, "enableBluetooth silent failed: ${e.message}")
+                Log.e(TAG, "startActivityForResult failed: ${e.message}")
+                pendingEnableResult = null
                 result.success(false)
-            } finally {
-                isEnablingBluetooth = false
             }
+            return
+        }
+
+        // Android < 12: attempt silent enable (legacy)
+        try {
+            val ok = ad.enable()
+            result.success(ok)
+        } catch (e: Exception) {
+            Log.e(TAG, "enableBluetooth silent failed: ${e.message}")
+            result.success(false)
         }
     }
 
@@ -292,13 +316,13 @@ class FlutterBluetoothClassicPlugin : FlutterPlugin, MethodChannel.MethodCallHan
     // ---------------------------
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
         if (requestCode == REQUEST_ENABLE_BT) {
-            val ad = adapter
-            val enabled = ad?.isEnabled == true
+            val enabled = adapter?.isEnabled == true
             pendingEnableResult?.let {
-                try { it.success(enabled) } catch (_: Exception) {}
+                try {
+                    it.success(enabled)
+                } catch (_: Exception) {}
                 pendingEnableResult = null
             }
-            isEnablingBluetooth = false
             return true
         }
         return false
@@ -329,14 +353,20 @@ class FlutterBluetoothClassicPlugin : FlutterPlugin, MethodChannel.MethodCallHan
 
         val filter = IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
         try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                context?.registerReceiver(
+            val ctx = context
+            if (ctx == null) {
+                Log.w(TAG, "registerBluetoothStateReceiver: context is null, skipping")
+                return
+            }
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                ctx.registerReceiver(
                     bluetoothStateReceiver,
                     filter,
                     Context.RECEIVER_EXPORTED
                 )
             } else {
-                context?.registerReceiver(bluetoothStateReceiver, filter)
+                ctx.registerReceiver(bluetoothStateReceiver, filter)
             }
             Log.d(TAG, "Bluetooth state receiver registered with proper flags")
         } catch (e: Exception) {
@@ -346,8 +376,13 @@ class FlutterBluetoothClassicPlugin : FlutterPlugin, MethodChannel.MethodCallHan
 
     private fun unregisterBluetoothStateReceiver() {
         try {
+            val ctx = context
+            if (ctx == null) {
+                Log.w(TAG, "unregisterBluetoothStateReceiver: context null")
+                return
+            }
             if (bluetoothStateReceiver != null) {
-                context?.unregisterReceiver(bluetoothStateReceiver)
+                ctx.unregisterReceiver(bluetoothStateReceiver)
                 bluetoothStateReceiver = null
                 Log.d(TAG, "Bluetooth state receiver unregistered")
             }
@@ -370,87 +405,106 @@ class FlutterBluetoothClassicPlugin : FlutterPlugin, MethodChannel.MethodCallHan
     }
 
     private fun startDiscovery() {
-    val ad = adapter ?: run {
-        mainHandler.post { discoverySink?.error("NO_ADAPTER", "Bluetooth adapter not available", null) }
-        return
-    }
-
-    // ✅ Android 12+: cek permission dulu
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        val hasScanPerm = context?.checkSelfPermission(android.Manifest.permission.BLUETOOTH_SCAN) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        val hasLocPerm = context?.checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        if (!hasScanPerm || !hasLocPerm) {
-            Log.w(TAG, "Missing BLUETOOTH_SCAN or LOCATION permission, skipping discovery")
-            mainHandler.post {
-                discoverySink?.error("NO_PERMISSION", "Missing Bluetooth scan/location permission", null)
-            }
+        val ad = adapter ?: run {
+            mainHandler.post { discoverySink?.error("NO_ADAPTER", "Bluetooth adapter not available", null) }
             return
         }
-    }
 
-    // ✅ GPS status check (opsional, tapi penting)
-    try {
-        val lm = context?.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
-        val gpsEnabled = lm?.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) ?: false
-        if (!gpsEnabled) {
-            Log.w(TAG, "GPS disabled → discovery may return empty results")
-        }
-    } catch (e: Exception) {
-        Log.w(TAG, "Unable to check GPS: ${e.message}")
-    }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val ctx = context
+            if (ctx == null) {
+                mainHandler.post { discoverySink?.error("NO_CONTEXT", "Context null", null) }
+                return
+            }
 
-    if (discoveryReceiver == null) {
-        discoveryReceiver = object : BroadcastReceiver() {
-            override fun onReceive(ctx: Context?, intent: Intent?) {
-                val action = intent?.action
-                if (action == BluetoothDevice.ACTION_FOUND) {
-                    val device: BluetoothDevice? = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-                    val rssi: Short = intent?.getShortExtra(BluetoothDevice.EXTRA_RSSI, Short.MIN_VALUE) ?: Short.MIN_VALUE
-                    device?.let {
-                        val map = mapOf(
-                            "name" to (it.name ?: ""),
-                            "address" to (it.address ?: ""),
-                            "rssi" to rssi.toInt()
-                        )
-                        Log.d(TAG, "Found device: ${it.name} (${it.address})") // ✅ penting untuk debug
-                        mainHandler.post { discoverySink?.success(map) }
-                    }
-                } else if (action == BluetoothAdapter.ACTION_DISCOVERY_FINISHED) {
-                    Log.d(TAG, "Discovery finished") // ✅ biar tau kapan selesai
-                    mainHandler.post { discoverySink?.endOfStream() }
+            val hasScanPerm = ActivityCompat.checkSelfPermission(
+                ctx, Manifest.permission.BLUETOOTH_SCAN
+            ) == PackageManager.PERMISSION_GRANTED
+
+            val hasLocPerm = ActivityCompat.checkSelfPermission(
+                ctx, Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (!hasScanPerm || !hasLocPerm) {
+                Log.w(TAG, "Missing BLUETOOTH_SCAN or LOCATION permission, skipping discovery")
+                mainHandler.post {
+                    discoverySink?.error("NO_PERMISSION", "Missing Bluetooth scan/location permission", null)
                 }
+                return
             }
         }
 
-        val filter = IntentFilter().apply {
-            addAction(BluetoothDevice.ACTION_FOUND)
-            addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+        // GPS status check (optional)
+        try {
+            val lm = context?.getSystemService(Context.LOCATION_SERVICE) as? android.location.LocationManager
+            val gpsEnabled = lm?.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER) ?: false
+            if (!gpsEnabled) {
+                Log.w(TAG, "GPS disabled → discovery may return empty results")
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Unable to check GPS: ${e.message}")
+        }
+
+        if (discoveryReceiver == null) {
+            discoveryReceiver = object : BroadcastReceiver() {
+                override fun onReceive(ctx: Context?, intent: Intent?) {
+                    val action = intent?.action
+                    if (action == BluetoothDevice.ACTION_FOUND) {
+                        val device: BluetoothDevice? = intent?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
+                        val rssi: Short = intent?.getShortExtra(BluetoothDevice.EXTRA_RSSI, Short.MIN_VALUE) ?: Short.MIN_VALUE
+                        device?.let {
+                            val map = mapOf(
+                                "name" to (it.name ?: ""),
+                                "address" to (it.address ?: ""),
+                                "rssi" to rssi.toInt()
+                            )
+                            Log.d(TAG, "Found device: ${it.name} (${it.address})")
+                            mainHandler.post { discoverySink?.success(map) }
+                        }
+                    } else if (action == BluetoothAdapter.ACTION_DISCOVERY_FINISHED) {
+                        Log.d(TAG, "Discovery finished")
+                        mainHandler.post { discoverySink?.endOfStream() }
+                    }
+                }
+            }
+
+            val filter = IntentFilter().apply {
+                addAction(BluetoothDevice.ACTION_FOUND)
+                addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+            }
+
+            try {
+                val ctx = context
+                if (ctx == null) {
+                    Log.w(TAG, "register discoveryReceiver: context null")
+                } else {
+                    ctx.registerReceiver(discoveryReceiver, filter)
+                    Log.d(TAG, "Discovery receiver registered")
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "registerReceiver failed: ${e.message}")
+            }
         }
 
         try {
-            context?.registerReceiver(discoveryReceiver, filter)
-            Log.d(TAG, "Discovery receiver registered")
+            if (!ad.isDiscovering) {
+                val ok = ad.startDiscovery()
+                Log.d(TAG, "Bluetooth discovery started: $ok")
+            }
         } catch (e: Exception) {
-            Log.w(TAG, "registerReceiver failed: ${e.message}")
+            Log.w(TAG, "startDiscovery failed: ${e.message}")
         }
     }
-
-    try {
-        if (!ad.isDiscovering) {
-            val ok = ad.startDiscovery()
-            Log.d(TAG, "Bluetooth discovery started: $ok")
-        }
-    } catch (e: Exception) {
-        Log.w(TAG, "startDiscovery failed: ${e.message}")
-    }
-}
 
     private fun stopDiscovery() {
         try {
             val ad = adapter
             if (ad != null && ad.isDiscovering) ad.cancelDiscovery()
             if (discoveryReceiver != null) {
-                try { context?.unregisterReceiver(discoveryReceiver) } catch (_: Exception) {}
+                try {
+                    val ctx = context
+                    if (ctx != null) ctx.unregisterReceiver(discoveryReceiver)
+                } catch (_: Exception) {}
                 discoveryReceiver = null
             }
         } catch (e: Exception) {

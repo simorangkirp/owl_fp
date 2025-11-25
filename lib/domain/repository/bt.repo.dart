@@ -7,9 +7,6 @@ abstract class BluetoothRepository {
   /// ⛔ Menghentikan scan jika masih berjalan.
   Future<void> cancelDiscovery();
 
-  /// 🧩 Mengecek permission sebelum scan.
-  Future<void> checkPermission(Function() onGranted);
-
   /// 🔗 Koneksi ke device.
   Future<bool> connectDevice(BluetoothDeviceEntity device);
 
@@ -34,10 +31,14 @@ abstract class BluetoothRepository {
   /// 🧭 Cek apakah device masih terkoneksi.
   Future<bool> isConnected();
 
+  /// Geting Init Value from Device
+  Future<void> fetchInitValue();
+
   /// 🔔 Listener setup untuk Bluetooth event.
   Future<void> initListeners({
     Function(String state)? onStateChanged,
     Function(String conn)? onConnectionChanged,
     Function(String data)? onDataReceived,
+    Function(String result)? onResultReceived, // 👈 tambahin juga di abstract
   });
 }

@@ -9,11 +9,13 @@ class InitBluetoothListenersUseCase {
     required Function(String state)? onStateChanged,
     required Function(String conn)? onConnectionChanged,
     required Function(String data)? onDataReceived,
+    Function(String result)? onResultReceived,
   }) async {
     await repository.initListeners(
       onStateChanged: onStateChanged,
       onConnectionChanged: onConnectionChanged,
       onDataReceived: onDataReceived,
+      onResultReceived: onResultReceived,
     );
   }
 }

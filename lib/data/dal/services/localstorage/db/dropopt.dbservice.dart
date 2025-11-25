@@ -74,6 +74,19 @@ class DropOptDBHelper {
     // return await db.delete(DBConstant.tblUser);
   }
 
+  Future<int> deleteTemplatebyNik(Map<String, String> arg) async {
+    final db = await database;
+    return await db.delete(
+      DBConstant.tblFPKaryawan, // nama tabel
+      where: '''
+      sn LIKE ? AND
+      nik LIKE ?
+      ''', // kondisi hapus
+      whereArgs: ['%${arg['sn']}%', '%${arg['nik']}%'],
+    );
+    // return await db.delete(DBConstant.tblUser);
+  }
+
   ///
 
   /// Dropdown Options

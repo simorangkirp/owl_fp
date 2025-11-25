@@ -4,18 +4,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:owl_fp_newer/core/helper/register.fp.dialog.ext.dart';
 import 'package:owl_fp_newer/core/helper/send.command.ext.dart';
-import 'package:owl_fp_newer/core/resources/bt.native.dart';
 import 'package:owl_fp_newer/data/dal/services/get.storage.dart';
+import 'package:owl_fp_newer/data/model/mst.admin.model.dart';
 import 'package:owl_fp_newer/domain/entity/bt.entity.dart';
 import 'package:owl_fp_newer/domain/usecase/bluetooth/connect.device.uc.dart';
 import 'package:owl_fp_newer/domain/usecase/bluetooth/disconnect.uc.dart';
+import 'package:owl_fp_newer/domain/usecase/bluetooth/fetch.initvalue.uc.dart';
 import 'package:owl_fp_newer/domain/usecase/bluetooth/get.paired.uc.dart';
 import 'package:owl_fp_newer/domain/usecase/bluetooth/init.listener.uc.dart';
 import 'package:owl_fp_newer/domain/usecase/bluetooth/process.parser.uc.dart';
+import 'package:owl_fp_newer/domain/usecase/bluetooth/register.fp.uc.dart';
 import 'package:owl_fp_newer/domain/usecase/bluetooth/scan.devices.uc.dart';
 import 'package:owl_fp_newer/domain/usecase/bluetooth/send.command.uc.dart';
+import 'package:owl_fp_newer/domain/usecase/fingerprint/get.mst.admin.dart';
 import 'package:owl_fp_newer/presentation/ui/common/controller/permission.controller.dart';
+import 'package:owl_fp_newer/presentation/ui/fingerprint/controllers/fingerprint.controller.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../../../core/resources/utils.dart';
 import '../../../../core/services/bluetooth.service.dart';
 
@@ -27,6 +33,9 @@ class Bt14CtrlController extends GetxController {
   final GetPairedDevicesUseCase _getPairedDevicesUseCase;
   final SendCommandUseCase _sendCommandUseCase;
   final DisconnectDeviceUseCase _disconnectDeviceUseCase;
+  final GetMasterAdminUsecase _getAdminMasterData;
+  final RegisterFingerUseCase _registerFpUseCase;
+  final FetchInitValueUseCase _fetchDeviceInitValueUseCase;
   Bt14CtrlController(
     this._scanDeviceUc,
     this._connectDeviceUseCase,
@@ -35,6 +44,9 @@ class Bt14CtrlController extends GetxController {
     this._getPairedDevicesUseCase,
     this._sendCommandUseCase,
     this._disconnectDeviceUseCase,
+    this._getAdminMasterData,
+    this._registerFpUseCase,
+    this._fetchDeviceInitValueUseCase,
   );
   // ─────────────────────────────────────────────────────────────
   // 🧠 STATE VARIABLES
@@ -56,6 +68,7 @@ class Bt14CtrlController extends GetxController {
   var bondedDevices = <BluetoothDeviceEntity>[].obs;
   var unBondedDevices = <BluetoothDeviceEntity>[].obs;
   var owlDevices = <BluetoothDeviceEntity>[].obs;
+  var displayedDevices = <BluetoothDeviceEntity>[].obs;
 
   // ─────────────────────────────────────────────────────────────
   // 🔹 CONTROLLERS (Text Editing)
@@ -67,6 +80,7 @@ class Bt14CtrlController extends GetxController {
   final alamatServerCtrl = TextEditingController();
   final waktuDeleteCtrl = TextEditingController();
   final authCtrl = TextEditingController();
+  final typeAheadController = TextEditingController()..text = "";
   final selectedtod = TextEditingController()..text = 'hh:ss';
   final selectedDt = TextEditingController()..text = 'dd/MM/yyyy';
   RxBool isPwObscured = true.obs;
@@ -111,6 +125,14 @@ class Bt14CtrlController extends GetxController {
   String selectedDeleteNm = "";
   String authText = "";
 
+  // ─────────────────────────────────────────────────────────────
+  // 🔹 ADMIN's VARIABLES
+  // ─────────────────────────────────────────────────────────────
+  var listAdminOpt = <MstAdminModel>[].obs;
+  final oldpinCtrl = TextEditingController();
+  final newpinCtrl = TextEditingController();
+  final confpinCtrl = TextEditingController();
+
   @override
   void onInit() {
     super.onInit();
@@ -118,7 +140,7 @@ class Bt14CtrlController extends GetxController {
     checkSupport();
     // Start listening to native state stream (EventChannel)
     listenToBluetoothState();
-
+    getMstAdmin();
     _initListeners();
     getBondedDevices();
 
@@ -141,16 +163,70 @@ class Bt14CtrlController extends GetxController {
     super.onClose();
   }
 
+  Future<void> getDisplayDevices() async {
+    final fCtrl = Get.find<FingerprintController>();
+    final idx = fCtrl.opt1.indexOf(fCtrl.selectedOpt1.value);
+    switch (idx) {
+      case 0:
+        displayedDevices.assignAll(bondedDevices);
+        break;
+      case 1:
+        displayedDevices.assignAll(unBondedDevices);
+        break;
+      case 2:
+        displayedDevices.assignAll(owlDevices);
+        break;
+    }
+  }
+
+  Future<void> adminSelection(int index) async {
+    switch (index) {
+      case 0:
+        await gantiPIN();
+        resetVariables();
+        break;
+
+      case 1:
+        var access = "";
+        for (var el in listAdminOpt) {
+          if (el.selected.value) {
+            access = '${access}1';
+          } else {
+            access = '${access}0';
+          }
+        }
+        await addAdminPrivileges(access);
+        resetVariables();
+        break;
+
+      case 2:
+        await regDelFinger(
+          isRegister: false, // false kalau hapus
+          nik: selectedRegisterNIK, // pakai variable dari controller
+          name: selectedRegisterNm, // pakai variable dari controller
+        );
+        resetVariables();
+        break;
+    }
+  }
+
   Future<void> _initListeners() async {
     await _initBluetoothListenersUseCase.execute(
       onStateChanged: (state) {
         isEnabled.value = (state == "enabled");
       },
       onConnectionChanged: (conn) {
-        log("🔌 Connection: $conn"); // conn adalah String
+        log("🔌 Connection: $conn");
       },
       onDataReceived: (data) {
         onDataReceived(data);
+      },
+      onResultReceived: (result) {
+        // ✅ sekarang udah dikenal
+        Get.snackbar("Result Diterima", result,
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green.shade600,
+            colorText: Colors.white);
       },
     );
   }
@@ -199,7 +275,8 @@ class Bt14CtrlController extends GetxController {
   void listenToBluetoothState() {
     _btStateSub?.cancel();
     try {
-      _btStateSub = BluetoothService.bluetoothStateStream.listen((state) {
+      _btStateSub =
+          FlutterBluetoothClassic.bluetoothStateStream.listen((state) {
         log("📡 Bluetooth state (native): $state");
 
         final s = state.toLowerCase();
@@ -262,6 +339,13 @@ class Bt14CtrlController extends GetxController {
     // selectedDt.value = '${value.day}/${value.month}/${value.year}';
   }
 
+  Future<void> getMstAdmin() async {
+    listAdminOpt.value = await _getAdminMasterData.execute();
+    for (var element in listAdminOpt) {
+      log(element.key ?? "");
+    }
+  }
+
   Future<void> checkSupport() async {
     try {
       isSupported.value = await FlutterBluetoothClassic.isBluetoothSupported();
@@ -320,6 +404,8 @@ class Bt14CtrlController extends GetxController {
 
     try {
       await _connectDeviceUseCase.execute(selectedDevice.value!);
+      // Future.delayed(Duration(seconds: 2));
+      // await getInitValue();
       isConnected.value = true;
       handshakeDone.value = true;
     } catch (e) {
@@ -431,9 +517,15 @@ class Bt14CtrlController extends GetxController {
   Future<void> scanDevices() async {
     await _scanDeviceUc.checkPermission(() async {
       log('🚀 scanDevices (clean version)');
-      await _scanDeviceUc.cancel(); // cancel scan sebelumnya
 
-      // Bersihkan semua list agar hasil fresh
+      // Hentikan listener sebelumnya
+      await _discoverySub?.cancel();
+      _discoverySub = null;
+
+      // Reset event stream plugin
+      FlutterBluetoothClassic.resetScanStream();
+
+      // Reset list
       devices.clear();
       bondedDevices.clear();
       unBondedDevices.clear();
@@ -442,61 +534,77 @@ class Bt14CtrlController extends GetxController {
       isDiscovering.value = true;
 
       try {
-        // Ambil paired devices (bonded list dari sistem)
-        final pairedList = await FlutterBluetoothClassic.getPairedDevices();
+        // Ambil paired device
+        List pairedList = await FlutterBluetoothClassic.getPairedDevices();
         log("📡 Paired devices ditemukan: ${pairedList.length}");
 
-        _discoverySub = _scanDeviceUc.execute().listen((device) {
-          log("📍 Found: ${device.name} (${device.address})");
+        // Start scan
+        _discoverySub = _scanDeviceUc.execute().listen(
+          (device) {
+            log("📍 Found: ${device.name} (${device.address})");
 
-          // 🔍 Cegah duplikat di semua list
-          bool alreadyExists(String addr) =>
-              devices.any((x) => x.address == addr) ||
-              bondedDevices.any((x) => x.address == addr) ||
-              unBondedDevices.any((x) => x.address == addr) ||
-              owlDevices.any((x) => x.address == addr);
+            bool exists(String addr) =>
+                devices.any((x) => x.address == addr) ||
+                bondedDevices.any((x) => x.address == addr) ||
+                unBondedDevices.any((x) => x.address == addr) ||
+                owlDevices.any((x) => x.address == addr);
 
-          if (alreadyExists(device.address)) return;
+            if (exists(device.address)) return;
 
-          // Tambahkan ke list utama
-          devices.add(device);
+            devices.add(device);
 
-          // 🔎 Cek apakah termasuk paired / OWL
-          final isPaired = pairedList.any(
-            (p) => p['address']?.toString() == device.address.toString(),
-          );
+            final isPaired = pairedList.any(
+              (p) => p['address']?.toString() == device.address,
+            );
 
-          final isOwl = device.name.toUpperCase().contains("OWL") ||
-              device.address.toUpperCase().contains("OWL");
+            final isOwl = (device.name).toUpperCase().contains("OWL") ||
+                device.address.toUpperCase().contains("OWL");
 
-          // Buat entitas device baru
-          final newEntity = BluetoothDeviceEntity(
-            name: device.name,
-            address: device.address,
-            bonded: isPaired,
-          );
+            final newEntity = BluetoothDeviceEntity(
+              name: device.name,
+              address: device.address,
+              bonded: isPaired,
+            );
 
-          // 💡 Klasifikasi sesuai kategori
-          if (isOwl) {
-            owlDevices.add(newEntity);
-          }
-          if (isPaired) {
-            bondedDevices.add(newEntity);
-          } else {
-            unBondedDevices.add(newEntity);
-          }
-        }, onError: (err) {
-          log("❌ scanDevices error: $err");
-        }, onDone: () {
-          log("✅ Selesai scanning");
-          log("📊 bonded: ${bondedDevices.length}, unbonded: ${unBondedDevices.length}, owl: ${owlDevices.length}");
-          isDiscovering.value = false;
-        });
+            if (isOwl) owlDevices.add(newEntity);
+            if (isPaired) {
+              bondedDevices.add(newEntity);
+            } else {
+              unBondedDevices.add(newEntity);
+            }
+          },
+          onDone: () {
+            log("✅ Selesai scanning");
+            isDiscovering.value = false;
+          },
+          onError: (err) {
+            log("❌ scanDevices error: $err");
+            isDiscovering.value = false;
+          },
+        );
       } catch (e) {
         log("❌ scanDevices exception: $e");
         isDiscovering.value = false;
       }
     });
+  }
+
+  Future<bool> ensureBluetoothPermissions() async {
+    final perms = [
+      Permission.bluetoothScan,
+      Permission.bluetoothConnect,
+      Permission.bluetoothAdvertise,
+      Permission.locationWhenInUse,
+    ];
+
+    for (var p in perms) {
+      if (!await p.isGranted) {
+        final req = await p.request();
+        if (!req.isGranted) return false;
+      }
+    }
+
+    return true;
   }
 
   Future<void> startDiscoverSequence() async {
@@ -507,9 +615,16 @@ class Bt14CtrlController extends GetxController {
       return;
     }
 
+    // 🔹 Pastikan runtime permission Bluetooth sudah granted
+    final granted = await ensureBluetoothPermissions();
+    if (!granted) {
+      showSnackBar("Izin Bluetooth belum diberikan.");
+      return;
+    }
+
     await checkEnabled();
 
-    // 🔹 Kalau belum aktif, minta user nyalakan dulu
+    // 🔹 Kalau Bluetooth nonaktif → munculkan dialog dulu
     if (!isEnabled.value) {
       final confirm = await Get.dialog<bool>(
         AlertDialog(
@@ -529,27 +644,38 @@ class Bt14CtrlController extends GetxController {
         ),
       );
 
-      if (confirm == true) {
-        final ok = await FlutterBluetoothClassic.enableBluetooth();
-        if (!ok) {
-          showSnackBar("Bluetooth gagal diaktifkan, coba secara manual.");
-          return;
-        }
-
-        // Tunggu sedikit biar sistem update status
-        await Future.delayed(const Duration(seconds: 2));
-        await checkEnabled();
-        if (!isEnabled.value) {
-          showSnackBar("Bluetooth masih belum aktif.");
-          return;
-        }
-      } else {
+      if (confirm != true) {
         showSnackBar("Bluetooth belum diaktifkan.");
+        return;
+      }
+
+      // 🔥 Setelah user tekan "Aktifkan", cek permission BLUETOOTH_CONNECT lagi
+      final hasConnectPerm = await Permission.bluetoothConnect.isGranted;
+      if (!hasConnectPerm) {
+        final req = await Permission.bluetoothConnect.request();
+        if (!req.isGranted) {
+          showSnackBar("Izin BLUETOOTH_CONNECT belum diberikan.");
+          return;
+        }
+      }
+
+      // 🔥 Permission aman → sekarang boleh panggil native enable
+      final ok = await FlutterBluetoothClassic.enableBluetooth();
+      if (!ok) {
+        showSnackBar("Bluetooth gagal diaktifkan, coba secara manual.");
+        return;
+      }
+
+      // Tunggu state update
+      await Future.delayed(const Duration(seconds: 2));
+      await checkEnabled();
+      if (!isEnabled.value) {
+        showSnackBar("Bluetooth masih belum aktif.");
         return;
       }
     }
 
-    // 🚀 Bluetooth aktif, lanjut ke scanning
+    // 🚀 Sampai sini Bluetooth pasti aktif
     await scanDevices();
   }
 
@@ -585,11 +711,12 @@ class Bt14CtrlController extends GetxController {
     required bool isRegister,
     required String nik,
     required String name,
-    required String auth,
   }) async {
-    final data = isRegister ? "r\n$nik\n$name\n?\n$auth" : "5\n$nik\n?\n$auth";
+    final data = isRegister
+        ? "r\n$nik\n$name\n?\n${authCtrl.text}"
+        : "5\n$nik\n?\n${authCtrl.text}";
     await _executeWithPermission(() async {
-      await _sendCommandUseCase.callWithUI(
+      await _registerFpUseCase.callWithUI(
         data: data,
         desc: isRegister ? "Registrasi Fingerprint" : "Hapus Fingerprint",
         doneFlag: isDone,
@@ -598,10 +725,20 @@ class Bt14CtrlController extends GetxController {
   }
 
   // 🔹 Fungsi untuk ambil template dari mesin fingerprint
-  Future<void> getTemplateFromDevice(String args) async {
+  Future<void> getTemplateFromDevice() async {
     await _executeWithPermission(() async {
       await _sendCommandUseCase.callWithUI(
-        data: "7\n?\n$args",
+        data: "7\n?\n${authCtrl.text}",
+        desc: "Ambil Template",
+        doneFlag: isDone,
+      );
+    });
+  }
+
+  Future<void> getTemplateByNikFromDevice() async {
+    await _executeWithPermission(() async {
+      await _sendCommandUseCase.callWithUI(
+        data: "6\n$selectedRegisterNIK\n?\n${authCtrl.text}",
         desc: "Ambil Template",
         doneFlag: isDone,
       );
@@ -624,10 +761,10 @@ class Bt14CtrlController extends GetxController {
   }
 
   // 🔹 Fungsi untuk merubah PIN
-  Future<void> gantiPIN(String newPin, String auth) async {
+  Future<void> gantiPIN() async {
     await _executeWithPermission(() async {
       await _sendCommandUseCase.callWithUI(
-        data: "x\n$newPin\n?\n$auth",
+        data: "x\n${newpinCtrl.text}\n?\n${authCtrl.text}",
         desc: "Ganti PIN",
         doneFlag: isDone,
       );
@@ -635,10 +772,10 @@ class Bt14CtrlController extends GetxController {
   }
 
   // 🔹 Fungsi untuk menambahkan hak akses admin
-  Future<void> addAdminPrivileges(String arg, String auth, String nik) async {
+  Future<void> addAdminPrivileges(String arg) async {
     await _executeWithPermission(() async {
       await _sendCommandUseCase.callWithUI(
-        data: "v\n$nik\n$arg\n?\n$auth",
+        data: "v\n$selectedRegisterNIK\n$arg\n?\n${authCtrl.text}",
         desc: "Tambah Admin",
         doneFlag: isDone,
       );
@@ -661,6 +798,14 @@ class Bt14CtrlController extends GetxController {
     isDone.value = false;
     listInsertTemplate.clear();
     bufferProcess.value = false;
+    oldpinCtrl.clear();
+    newpinCtrl.clear();
+    confpinCtrl.clear();
+  }
+
+// Fungsi untuk mengambil init value dari mesin
+  Future<void> getInitValue() async {
+    await _fetchDeviceInitValueUseCase.execute(selectedDevice.value!);
   }
 
   // 🔹 Fungsi untuk merubah PIN

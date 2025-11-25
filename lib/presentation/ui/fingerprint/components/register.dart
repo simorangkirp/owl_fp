@@ -34,12 +34,10 @@ class RegisterComponent extends StatelessWidget {
           message: "inputPassword".tr, // Masukkan Password
           controller: btctrl.authCtrl,
           onSubmit: () async {
-            Get.back();
             await btctrl.regDelFinger(
               isRegister: index == 0 ? true : false, // false kalau hapus
               nik: btctrl.selectedRegisterNIK, // pakai variable dari controller
               name: btctrl.selectedRegisterNm, // pakai variable dari controller
-              auth: btctrl.authText,
             );
           },
         );

@@ -11,6 +11,7 @@ abstract class FingerprintRepository {
   Future<List<String>> getDtOpt(String arg);
   Future<void> insertTemplate(List<Map<String, dynamic>> args);
   Future<int> deleteTemp(String args);
+  Future<int> deleteTempbyNik(Map<String, String> arg);
   Future<List<String>> getSnList();
   Future<DataState> uploadTemplateServer(Map<String, dynamic> args);
   Future<List<TemplateModel>> getTemplateData(String args);

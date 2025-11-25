@@ -6,8 +6,10 @@ import 'package:owl_fp_newer/presentation/constant.dart';
 
 import 'controllers/about.controller.dart';
 
-class AboutScreen extends GetView<AboutController> {
-  const AboutScreen({super.key});
+class AboutScreen extends StatelessWidget {
+  final controller = Get.find<AboutController>();
+  AboutScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -25,14 +27,20 @@ class AboutScreen extends GetView<AboutController> {
             ),
             SizedBox(height: 32.h),
             const Text("OWL Plantation System"),
-            const Text("Versi 1.0.0"),
-            const Text("Build 2"),
+            Obx(() => Text(
+                  "App Version: ${controller.version}",
+                )),
+            Obx(() => Text(
+                  "Build Number: ${controller.buildNumber}",
+                )),
             SizedBox(height: 32.h),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 fixedSize: Size(double.maxFinite, 42.h),
               ),
-              onPressed: () {},
+              onPressed: () {
+                controller.getAppVer();
+              },
               child: Text('ltsVer'.tr),
             ),
             const Spacer(),
